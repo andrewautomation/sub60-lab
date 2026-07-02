@@ -1,84 +1,100 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
-export default function NewSwimTestPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+type SwimTest = {
+  id: string;
+  test_date: string;
+  test_type: string;
+  distance_m: number;
+  time_seconds: number;
+  pace_per_100m: string | null;
+  swolf: number | null;
+  total_strokes: number | null;
+  stroke_rate: number | null;
+};
 
-  const [testDate, setTestDate] = useState("2026-07-02");
-  const [distance, setDistance] = useState("400");
-  const [timeSeconds, setTimeSeconds] = useState("387.6");
-  const [pace, setPace] = useState("1:37 /100m");
-  const [swolf, setSwolf] = useState("35");
-  const [strokes, setStrokes] = useState("171");
-  const [strokeRate, setStrokeRate] = useState("26");
-  const [poolLength, setPoolLength] = useState("25");
-  const [avgHr, setAvgHr] = useState("111");
-  const [maxHr, setMaxHr] = useState("120");
+export default function SwimHistoryPage() {
+  const [tests, setTests] = useState<SwimTest[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  async function saveTest() {
-    setLoading(true);
+  useEffect(() => {
+    async function loadTests() {
+      const { data, error } = await supabase
+        .from("swim_tests")
+        .select(
+          "id, test_date, test_type, distance_m, time_seconds, pace_per_100m, swolf, total_strokes, stroke_rate"
+        )
+        .order("test_date", { ascending: false });
 
-    const { data: userData } = await supabase.auth.getUser();
+      if (!error && data) {
+        setTests(data);
+      }
 
-    if (!userData.user) {
-      alert("You must be logged in.");
       setLoading(false);
-      return;
     }
 
-    const { error } = await supabase.from("swim_tests").insert({
-      user_id: userData.user.id,
-      test_date: testDate,
-      test_type: "400m TT",
-      pool_length_m: Number(poolLength),
-      distance_m: Number(distance),
-      time_seconds: Number(timeSeconds),
-      pace_per_100m: pace,
-      swolf: Number(swolf),
-      total_strokes: Number(strokes),
-      stroke_rate: Number(strokeRate),
-      avg_hr: Number(avgHr),
-      max_hr: Number(maxHr),
-      notes: "Baseline 400m pool swim test",
-    });
+    loadTests();
+  }, []);
 
-    setLoading(false);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    router.push("/dashboard");
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        Loading swim tests...
+      </main>
+    );
   }
 
   return (
     <main className="min-h-screen bg-slate-950 text-white p-8">
-      <div className="mx-auto max-w-xl rounded-2xl bg-slate-900 p-8">
-        <h1 className="text-3xl font-bold mb-6">Add Swim Test</h1>
+      <div className="flex justify-between items-center">
+        <div>
+          <Link href="/dashboard" className="text-cyan-400">
+            ← Dashboard
+          </Link>
+          <h1 className="text-4xl font-bold mt-4">Swim History</h1>
+        </div>
 
-        <input className="input" value={testDate} onChange={(e) => setTestDate(e.target.value)} />
-        <input className="input" value={distance} onChange={(e) => setDistance(e.target.value)} />
-        <input className="input" value={timeSeconds} onChange={(e) => setTimeSeconds(e.target.value)} />
-        <input className="input" value={pace} onChange={(e) => setPace(e.target.value)} />
-        <input className="input" value={swolf} onChange={(e) => setSwolf(e.target.value)} />
-        <input className="input" value={strokes} onChange={(e) => setStrokes(e.target.value)} />
-        <input className="input" value={strokeRate} onChange={(e) => setStrokeRate(e.target.value)} />
-        <input className="input" value={poolLength} onChange={(e) => setPoolLength(e.target.value)} />
-        <input className="input" value={avgHr} onChange={(e) => setAvgHr(e.target.value)} />
-        <input className="input" value={maxHr} onChange={(e) => setMaxHr(e.target.value)} />
-
-        <button
-          onClick={saveTest}
-          disabled={loading}
-          className="mt-4 w-full rounded-lg bg-cyan-500 py-3 font-semibold text-black"
+        <Link
+          href="/dashboard/swim/new"
+          className="rounded-lg bg-cyan-500 px-4 py-2 text-black font-semibold"
         >
-          {loading ? "Saving..." : "Save Swim Test"}
-        </button>
+          Add Swim Test
+        </Link>
+      </div>
+
+      <div className="mt-10 rounded-2xl bg-slate-900 overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-slate-800 text-slate-300">
+            <tr>
+              <th className="p-4">Date</th>
+              <th className="p-4">Test</th>
+              <th className="p-4">Distance</th>
+              <th className="p-4">Time</th>
+              <th className="p-4">Pace</th>
+              <th className="p-4">SWOLF</th>
+              <th className="p-4">Strokes</th>
+              <th className="p-4">Stroke Rate</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {tests.map((test) => (
+              <tr key={test.id} className="border-t border-slate-800">
+                <td className="p-4">{test.test_date}</td>
+                <td className="p-4">{test.test_type}</td>
+                <td className="p-4">{test.distance_m} m</td>
+                <td className="p-4">{test.time_seconds}s</td>
+                <td className="p-4">{test.pace_per_100m}</td>
+                <td className="p-4">{test.swolf}</td>
+                <td className="p-4">{test.total_strokes}</td>
+                <td className="p-4">{test.stroke_rate} spm</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </main>
   );
