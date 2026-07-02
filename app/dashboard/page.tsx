@@ -13,6 +13,12 @@ type SwimTest = {
   swolf: number | null;
 };
 
+function formatTime(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  const remaining = (seconds % 60).toFixed(1).padStart(4, "0");
+  return `${minutes}:${remaining}`;
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -83,7 +89,7 @@ export default function Dashboard() {
             <div className="mt-6 space-y-2 text-slate-300">
               <p>Last test: {lastSwimTest.distance_m} m</p>
               <p className="text-3xl font-bold text-white">
-                {lastSwimTest.time_seconds}s
+              {formatTime(lastSwimTest.time_seconds)}
               </p>
               <p>Pace: {lastSwimTest.pace_per_100m}</p>
               <p>SWOLF: {lastSwimTest.swolf}</p>
