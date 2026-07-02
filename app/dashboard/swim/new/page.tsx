@@ -1,43 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-
-type SwimTest = {
-  id: string;
-  test_date: string;
-  test_type: string;
-  distance_m: number;
-  time_seconds: number;
-  pace_per_100m: string | null;
-  swolf: number | null;
-  total_strokes: number | null;
-  stroke_rate: number | null;
-};
+import { useSwimTests } from "@/hooks/useSwimTests";
 
 export default function SwimHistoryPage() {
-  const [tests, setTests] = useState<SwimTest[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadTests() {
-      const { data, error } = await supabase
-        .from("swim_tests")
-        .select(
-          "id, test_date, test_type, distance_m, time_seconds, pace_per_100m, swolf, total_strokes, stroke_rate"
-        )
-        .order("test_date", { ascending: false });
-
-      if (!error && data) {
-        setTests(data);
-      }
-
-      setLoading(false);
-    }
-
-    loadTests();
-  }, []);
+  const { tests, loading } = useSwimTests();
 
   if (loading) {
     return (

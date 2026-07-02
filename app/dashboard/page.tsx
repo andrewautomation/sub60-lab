@@ -1,60 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import DashboardCard from "@/components/DashboardCard";
 import KpiCard from "@/components/KpiCard";
+import { useDashboard } from "@/hooks/useDashboard";
+import { formatTime } from "@/lib/format/time";
 
-type SwimTest = {
-  test_date: string;
-  distance_m: number;
-  time_seconds: number;
-  pace_per_100m: string | null;
-  swolf: number | null;
+const TREND_LABEL = {
+  improving: "▲ Improving",
+  stable: "▬ Stable",
+  declining: "▼ Declining",
 };
 
-function formatTime(seconds: number) {
-  const minutes = Math.floor(seconds / 60);
-  const remaining = (seconds % 60).toFixed(1).padStart(4, "0");
-  return `${minutes}:${remaining}`;
-}
-
 export default function Dashboard() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [lastSwimTest, setLastSwimTest] = useState<SwimTest | null>(null);
-
-  useEffect(() => {
-    async function loadDashboard() {
-      const { data: sessionData } = await supabase.auth.getSession();
-
-      if (!sessionData.session) {
-        router.push("/login");
-        return;
-      }
-
-      const { data } = await supabase
-        .from("swim_tests")
-        .select("test_date, distance_m, time_seconds, pace_per_100m, swolf")
-        .order("test_date", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (data) {
-        setLastSwimTest(data);
-      }
-
-      setLoading(false);
-    }
-
-    loadDashboard();
-  }, [router]);
-
-  async function logout() {
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
+  const { loading, lastSwimTest, swimPersonalBest, swimTrend, logout } =
+    useDashboard();
 
   if (loading) {
     return <div className="flex items-center justify-center">Loading...</div>;
@@ -70,19 +30,32 @@ export default function Dashboard() {
           <h1 className="text-4xl font-bold mt-2">Dashboard</h1>
         </div>
 
-        <button
-          onClick={logout}
-          className="rounded-lg bg-slate-800 px-4 py-2 hover:bg-slate-700"
-        >
-          Logout
-        </button>
+        <div className="flex gap-3">
+          <Link
+            href="/dashboard/import"
+            className="rounded-lg bg-cyan-500 px-4 py-2 text-black font-semibold"
+          >
+            ⬆ Import Activity
+          </Link>
+
+          <button
+            onClick={logout}
+            className="rounded-lg bg-slate-800 px-4 py-2 hover:bg-slate-700"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-10">
         <KpiCard
           title="Swim PB"
-          value={lastSwimTest ? formatTime(lastSwimTest.time_seconds) : "—"}
-          subtitle="400 m TT"
+          value={
+            swimPersonalBest ? formatTime(swimPersonalBest.time_seconds) : "—"
+          }
+          subtitle={
+            swimTrend ? TREND_LABEL[swimTrend.trend] : "400 m TT"
+          }
         />
 
         <KpiCard

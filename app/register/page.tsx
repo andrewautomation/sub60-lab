@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { signUp } from "@/services/auth.service";
 import Link from "next/link";
 
 export default function RegisterPage() {
@@ -12,13 +12,11 @@ export default function RegisterPage() {
   async function register() {
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
+    const { error } = await signUp(
       email,
       password,
-      options: {
-        emailRedirectTo: "http://localhost:3000/login",
-      },
-    });
+      "http://localhost:3000/login"
+    );
 
     setLoading(false);
 

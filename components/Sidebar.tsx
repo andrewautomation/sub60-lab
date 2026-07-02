@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const links = [
   { href: "/dashboard", label: "🏠 Dashboard" },
+  { href: "/dashboard/import", label: "⬆ Import", badge: "Recommended" },
   { href: "/dashboard/swim", label: "🏊 Swim" },
   { href: "/dashboard/bike", label: "🚴 Bike" },
   { href: "/dashboard/run", label: "🏃 Run" },
@@ -30,13 +31,24 @@ export default function Sidebar() {
           <Link
             key={link.href}
             href={link.href}
-            className={`block rounded-lg px-4 py-3 transition ${
+            className={`flex items-center justify-between rounded-lg px-4 py-3 transition ${
               pathname === link.href
                 ? "bg-cyan-500 text-black font-semibold"
                 : "text-slate-300 hover:bg-slate-800"
             }`}
           >
-            {link.label}
+            <span>{link.label}</span>
+            {link.badge && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide ${
+                  pathname === link.href
+                    ? "bg-black/20 text-black"
+                    : "bg-cyan-500/20 text-cyan-400"
+                }`}
+              >
+                {link.badge}
+              </span>
+            )}
           </Link>
         ))}
       </nav>
