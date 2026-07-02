@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import DashboardCard from "@/components/DashboardCard";
+import KpiCard from "@/components/KpiCard";
 
 type SwimTest = {
   test_date: string;
@@ -56,15 +57,11 @@ export default function Dashboard() {
   }
 
   if (loading) {
-    return (
-      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        Loading...
-      </main>
-    );
+    return <div className="flex items-center justify-center">Loading...</div>;
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-8">
+    <>
       <div className="flex justify-between items-center">
         <div>
           <p className="text-cyan-400 tracking-[0.3em] text-sm">
@@ -81,83 +78,72 @@ export default function Dashboard() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
-        <section className="rounded-2xl bg-slate-900 p-6">
-          <h2 className="text-2xl font-bold">🏊 Swim</h2>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-10">
+        <KpiCard
+          title="Swim PB"
+          value={lastSwimTest ? formatTime(lastSwimTest.time_seconds) : "—"}
+          subtitle="400 m TT"
+        />
 
+        <KpiCard
+          title="Bike PB"
+          value="—"
+          subtitle="10 km TT"
+        />
+
+        <KpiCard
+          title="Run PB"
+          value="—"
+          subtitle="5 km TT"
+        />
+
+        <KpiCard
+          title="Sprint Prediction"
+          value="—"
+          subtitle="Waiting for bike/run data"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        <DashboardCard
+          title="Swim"
+          emoji="🏊"
+          newHref="/dashboard/swim/new"
+          historyHref="/dashboard/swim"
+        >
           {lastSwimTest ? (
-            <div className="mt-6 space-y-2 text-slate-300">
+            <div className="space-y-2">
               <p>Last test: {lastSwimTest.distance_m} m</p>
               <p className="text-3xl font-bold text-white">
-              {formatTime(lastSwimTest.time_seconds)}
+                {formatTime(lastSwimTest.time_seconds)}
               </p>
               <p>Pace: {lastSwimTest.pace_per_100m}</p>
               <p>SWOLF: {lastSwimTest.swolf}</p>
               <p>Date: {lastSwimTest.test_date}</p>
             </div>
           ) : (
-            <p className="mt-6 text-slate-400">No swim tests yet.</p>
+            <p className="text-slate-400">No swim tests yet.</p>
           )}
+        </DashboardCard>
 
-          <div className="mt-6 flex gap-3">
-            <Link
-              href="/dashboard/swim/new"
-              className="rounded-lg bg-cyan-500 px-4 py-2 text-black font-semibold"
-            >
-              Add Test
-            </Link>
+        <DashboardCard
+          title="Bike"
+          emoji="🚴"
+          newHref="/dashboard/bike/new"
+          historyHref="/dashboard/bike"
+        >
+          <p className="text-slate-400">No bike tests yet.</p>
+        </DashboardCard>
 
-            <Link
-              href="/dashboard/swim"
-              className="rounded-lg bg-slate-800 px-4 py-2"
-            >
-              History
-            </Link>
-          </div>
-        </section>
-
-        <section className="rounded-2xl bg-slate-900 p-6">
-          <h2 className="text-2xl font-bold">🚴 Bike</h2>
-          <p className="mt-6 text-slate-400">No bike tests yet.</p>
-
-          <div className="mt-6 flex gap-3">
-            <Link
-              href="/dashboard/bike/new"
-              className="rounded-lg bg-cyan-500 px-4 py-2 text-black font-semibold"
-            >
-              Add Test
-            </Link>
-
-            <Link
-              href="/dashboard/bike"
-              className="rounded-lg bg-slate-800 px-4 py-2"
-            >
-              History
-            </Link>
-          </div>
-        </section>
-
-        <section className="rounded-2xl bg-slate-900 p-6">
-          <h2 className="text-2xl font-bold">🏃 Run</h2>
-          <p className="mt-6 text-slate-400">No run tests yet.</p>
-
-          <div className="mt-6 flex gap-3">
-            <Link
-              href="/dashboard/run/new"
-              className="rounded-lg bg-cyan-500 px-4 py-2 text-black font-semibold"
-            >
-              Add Test
-            </Link>
-
-            <Link
-              href="/dashboard/run"
-              className="rounded-lg bg-slate-800 px-4 py-2"
-            >
-              History
-            </Link>
-          </div>
-        </section>
+        <DashboardCard
+          title="Run"
+          emoji="🏃"
+          newHref="/dashboard/run/new"
+          historyHref="/dashboard/run"
+        >
+          <p className="text-slate-400">No run tests yet.</p>
+        </DashboardCard>
       </div>
-    </main>
+    </>
   );
 }
