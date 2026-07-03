@@ -1,8 +1,9 @@
 import { TestFieldConfig, TestFormValues } from "@/components/tests/TestForm";
 import { TestColumnConfig } from "@/components/tests/TestHistoryTable";
 import { NewSwimTest, SwimTest } from "@/types/swim";
-import { formatTime } from "@/lib/format/time";
+import { formatTime, formatDuration } from "@/lib/format/time";
 import { formatOrDash } from "@/lib/format/value";
+import { parseDurationToSeconds } from "@/lib/parser/fieldUtils";
 
 export const SWIM_TEST_FIELDS: TestFieldConfig[] = [
   { key: "test_date", label: "Date", type: "date", required: true },
@@ -34,6 +35,30 @@ export const SWIM_TEST_DEFAULT_VALUES: TestFormValues = {
   pool_length_m: null,
   notes: null,
 };
+
+/**
+ * Keeps Time and Pace/100m in sync as the athlete fills the form — same
+ * derive-the-other-field behavior as lib/tests/runFields.ts's
+ * withDerivedRunFields, scaled by 100m instead of 1km.
+ */
+export function withDerivedSwimFields(
+  current: TestFormValues,
+  key: string,
+  value: string | number | null
+): TestFormValues {
+  const next = { ...current, [key]: value };
+  const distanceM = typeof next.distance_m === "number" ? next.distance_m : null;
+  if (!distanceM) return next;
+
+  if (key === "time_seconds" && typeof value === "number") {
+    next.pace_per_100m = formatDuration(value / (distanceM / 100));
+  } else if (key === "pace_per_100m" && typeof value === "string") {
+    const paceSecondsPer100m = parseDurationToSeconds(value);
+    if (paceSecondsPer100m !== null) next.time_seconds = Math.round(paceSecondsPer100m * (distanceM / 100));
+  }
+
+  return next;
+}
 
 export function swimTestToValues(test: SwimTest): TestFormValues {
   return { ...test };

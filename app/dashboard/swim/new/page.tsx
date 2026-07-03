@@ -6,7 +6,7 @@ import Link from "next/link";
 import TestForm, { TestFormValues } from "@/components/tests/TestForm";
 import { useSwimTests } from "@/hooks/useSwimTests";
 import { useTestTypes } from "@/hooks/useTestTypes";
-import { SWIM_TEST_DEFAULT_VALUES, SWIM_TEST_FIELDS, valuesToNewSwimTest } from "@/lib/tests/swimFields";
+import { SWIM_TEST_DEFAULT_VALUES, SWIM_TEST_FIELDS, valuesToNewSwimTest, withDerivedSwimFields } from "@/lib/tests/swimFields";
 import { validateSwimTestForm } from "@/lib/validators/validateSwimTestForm";
 
 export default function NewSwimTestPage() {
@@ -21,7 +21,7 @@ export default function NewSwimTestPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   function updateValue(key: string, value: string | number | null) {
-    setValues((current) => ({ ...current, [key]: value }));
+    setValues((current) => withDerivedSwimFields(current, key, value));
   }
 
   async function handleSubmit() {

@@ -35,6 +35,30 @@ export const BIKE_TEST_DEFAULT_VALUES: TestFormValues = {
   notes: null,
 };
 
+/**
+ * Keeps Time and Avg speed in sync as the athlete fills the form — same
+ * derive-the-other-field behavior as lib/tests/runFields.ts's
+ * withDerivedRunFields, just speed-based (higher is better) instead of
+ * pace-based.
+ */
+export function withDerivedBikeFields(
+  current: TestFormValues,
+  key: string,
+  value: string | number | null
+): TestFormValues {
+  const next = { ...current, [key]: value };
+  const distanceKm = typeof next.distance_km === "number" ? next.distance_km : null;
+  if (!distanceKm) return next;
+
+  if (key === "time_seconds" && typeof value === "number") {
+    next.avg_speed_kmh = Math.round((distanceKm / (value / 3600)) * 10) / 10;
+  } else if (key === "avg_speed_kmh" && typeof value === "number" && value > 0) {
+    next.time_seconds = Math.round((distanceKm / value) * 3600);
+  }
+
+  return next;
+}
+
 export function bikeTestToValues(test: BikeTest): TestFormValues {
   return { ...test };
 }

@@ -6,7 +6,7 @@ import Link from "next/link";
 import TestForm, { TestFormValues } from "@/components/tests/TestForm";
 import { useBikeTests } from "@/hooks/useBikeTests";
 import { useTestTypes } from "@/hooks/useTestTypes";
-import { BIKE_TEST_DEFAULT_VALUES, BIKE_TEST_FIELDS, valuesToNewBikeTest } from "@/lib/tests/bikeFields";
+import { BIKE_TEST_DEFAULT_VALUES, BIKE_TEST_FIELDS, valuesToNewBikeTest, withDerivedBikeFields } from "@/lib/tests/bikeFields";
 import { validateBikeTestForm } from "@/lib/validators/validateBikeTestForm";
 
 export default function NewBikeTestPage() {
@@ -21,7 +21,7 @@ export default function NewBikeTestPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   function updateValue(key: string, value: string | number | null) {
-    setValues((current) => ({ ...current, [key]: value }));
+    setValues((current) => withDerivedBikeFields(current, key, value));
   }
 
   async function handleSubmit() {
