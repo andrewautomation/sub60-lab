@@ -48,7 +48,7 @@ export interface TransitionEstimate {
   total_seconds: number;
 }
 
-export type RaceFormat = "super_sprint" | "sprint" | "olympic";
+export type RaceFormat = "super_sprint" | "sprint" | "olympic" | "half_iron" | "full_iron";
 
 export interface RacePrediction {
   format: RaceFormat;

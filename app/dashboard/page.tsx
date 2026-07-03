@@ -5,6 +5,7 @@ import DashboardCard from "@/components/DashboardCard";
 import KpiCard from "@/components/KpiCard";
 import { useDashboard } from "@/hooks/useDashboard";
 import { formatTime } from "@/lib/format/time";
+import { daysUntilGoal, getPrimaryEventLabel } from "@/lib/athlete/domain";
 
 const TREND_LABEL = {
   improving: "▲ Improving",
@@ -13,12 +14,14 @@ const TREND_LABEL = {
 };
 
 export default function Dashboard() {
-  const { loading, lastSwimTest, swimPersonalBest, swimTrend, logout } =
+  const { loading, athlete, lastSwimTest, swimPersonalBest, swimTrend, logout } =
     useDashboard();
 
-  if (loading) {
+  if (loading || !athlete) {
     return <div className="flex items-center justify-center">Loading...</div>;
   }
+
+  const daysToGoal = daysUntilGoal(athlete);
 
   return (
     <>
@@ -27,7 +30,16 @@ export default function Dashboard() {
           <p className="text-cyan-400 tracking-[0.3em] text-sm">
             SUB-60 PERFORMANCE LAB
           </p>
-          <h1 className="text-4xl font-bold mt-2">Dashboard</h1>
+          <h1 className="text-4xl font-bold mt-2">
+            {athlete.display_name ? `${athlete.display_name}'s Dashboard` : "Dashboard"}
+          </h1>
+          <p className="mt-2 text-slate-400">
+            {getPrimaryEventLabel(athlete)}
+            {athlete.goal_target_time_seconds && (
+              <> · Goal {formatTime(athlete.goal_target_time_seconds)}</>
+            )}
+            {daysToGoal !== null && daysToGoal >= 0 && <> · {daysToGoal} days to go</>}
+          </p>
         </div>
 
         <div className="flex gap-3">

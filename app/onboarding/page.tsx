@@ -1,0 +1,34 @@
+"use client";
+
+import { useOnboarding } from "@/hooks/useOnboarding";
+import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
+import SportStep from "@/components/onboarding/SportStep";
+import EventStep from "@/components/onboarding/EventStep";
+import ProfileStep from "@/components/onboarding/ProfileStep";
+import EquipmentStep from "@/components/onboarding/EquipmentStep";
+import BaselineStep from "@/components/onboarding/BaselineStep";
+import GoalStep from "@/components/onboarding/GoalStep";
+import ReviewStep from "@/components/onboarding/ReviewStep";
+
+export default function OnboardingPage() {
+  const { step, stepIndex, data, updateData, goNext, goBack, submit, submitting, submitError } = useOnboarding();
+
+  return (
+    <div>
+      <p className="text-cyan-400 tracking-[0.3em] text-sm mb-6">SUB-60 PERFORMANCE LAB — SETUP</p>
+      <OnboardingProgress stepIndex={stepIndex} />
+
+      {step === "sport" && <SportStep data={data} updateData={updateData} onNext={goNext} />}
+      {step === "event" && <EventStep data={data} updateData={updateData} onNext={goNext} onBack={goBack} />}
+      {step === "profile" && <ProfileStep data={data} updateData={updateData} onNext={goNext} onBack={goBack} />}
+      {step === "equipment" && (
+        <EquipmentStep data={data} updateData={updateData} onNext={goNext} onBack={goBack} />
+      )}
+      {step === "baseline" && <BaselineStep data={data} updateData={updateData} onNext={goNext} onBack={goBack} />}
+      {step === "goal" && <GoalStep data={data} updateData={updateData} onNext={goNext} onBack={goBack} />}
+      {step === "review" && (
+        <ReviewStep data={data} onBack={goBack} onSubmit={submit} submitting={submitting} submitError={submitError} />
+      )}
+    </div>
+  );
+}

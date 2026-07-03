@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSession, signOut } from "@/services/auth.service";
 import { fetchLatestSwimTest, fetchSwimTests } from "@/services/swim.service";
+import { fetchAthleteProfile } from "@/services/athlete.service";
 import {
   getGapToTarget,
   getLatestTrend,
   getPersonalBest,
 } from "@/lib/analytics/swim.analytics";
+import { hasCompletedOnboarding } from "@/lib/athlete/domain";
 import { DashboardSummary } from "@/types/dashboard";
+import { AthleteProfile } from "@/types/athlete";
 
 const EMPTY_SUMMARY: DashboardSummary = {
   lastSwimTest: null,
@@ -21,6 +24,7 @@ const EMPTY_SUMMARY: DashboardSummary = {
 export function useDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [athlete, setAthlete] = useState<AthleteProfile | null>(null);
   const [summary, setSummary] = useState<DashboardSummary>(EMPTY_SUMMARY);
 
   useEffect(() => {
@@ -31,6 +35,16 @@ export function useDashboard() {
         router.push("/login");
         return;
       }
+
+      // The Athlete domain — sport, event, and goal — drives everything
+      // else on this page, so it's resolved before anything else. A
+      // session with no completed onboarding is sent to set one up.
+      const athleteProfile = await fetchAthleteProfile();
+      if (!athleteProfile || !hasCompletedOnboarding(athleteProfile)) {
+        router.push("/onboarding");
+        return;
+      }
+      setAthlete(athleteProfile);
 
       // fetchLatestSwimTest gives the raw "last session" record for the
       // Swim module card; fetchSwimTests gives the Analytics Engine the
@@ -58,5 +72,5 @@ export function useDashboard() {
     router.push("/login");
   }
 
-  return { loading, ...summary, logout };
+  return { loading, athlete, ...summary, logout };
 }
