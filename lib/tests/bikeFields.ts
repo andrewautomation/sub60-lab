@@ -7,8 +7,8 @@ import { formatOrDash } from "@/lib/format/value";
 export const BIKE_TEST_FIELDS: TestFieldConfig[] = [
   { key: "test_date", label: "Date", type: "date", required: true },
   { key: "test_type_id", label: "Test type", type: "test_type", required: true },
-  { key: "distance_km", label: "Distance", type: "number", required: true, step: 0.01, unit: "km" },
-  { key: "time_seconds", label: "Time", type: "duration", required: true },
+  { key: "distance_km", label: "Distance", type: "number", required: true, step: 0.01, unit: "km", isDistance: true },
+  { key: "time_seconds", label: "Time", type: "duration", required: true, isTime: true },
   { key: "avg_power", label: "Avg power", type: "number", unit: "W" },
   { key: "normalized_power", label: "Normalized power", type: "number", unit: "W" },
   { key: "max_power", label: "Max power", type: "number", unit: "W" },

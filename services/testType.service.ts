@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { Discipline } from "@/lib/race/models";
 import { NewTestType, TestType } from "@/types/testType";
 
-const TEST_TYPE_COLUMNS = "id, discipline, name, event_id";
+const TEST_TYPE_COLUMNS = "id, discipline, name, event_id, distance, reps, distance_per_rep, rest_seconds";
 
 export async function fetchTestTypes(
   profileId: string,

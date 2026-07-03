@@ -8,8 +8,8 @@ import { parseDurationToSeconds } from "@/lib/parser/fieldUtils";
 export const SWIM_TEST_FIELDS: TestFieldConfig[] = [
   { key: "test_date", label: "Date", type: "date", required: true },
   { key: "test_type_id", label: "Test type", type: "test_type", required: true },
-  { key: "distance_m", label: "Distance", type: "number", required: true, unit: "m" },
-  { key: "time_seconds", label: "Time", type: "duration", required: true },
+  { key: "distance_m", label: "Distance", type: "number", required: true, unit: "m", isDistance: true },
+  { key: "time_seconds", label: "Time", type: "duration", required: true, isTime: true },
   { key: "pace_per_100m", label: "Pace / 100m", type: "text", placeholder: "e.g. 1:45" },
   { key: "swolf", label: "SWOLF", type: "number" },
   { key: "total_strokes", label: "Total strokes", type: "number" },

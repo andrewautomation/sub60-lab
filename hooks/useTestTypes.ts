@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { fetchProfile } from "@/services/profile.service";
 import { createTestType, deleteTestType, fetchTestTypes } from "@/services/testType.service";
 import { Discipline } from "@/lib/race/models";
-import { TestType } from "@/types/testType";
+import { NewTestTypeInput, TestType } from "@/types/testType";
 
 /** Loads the signed-in athlete's test types for one discipline and exposes
  * a create() that both persists the new type and appends it to the local
@@ -44,10 +44,18 @@ export function useTestTypes(discipline: Discipline) {
     };
   }, [discipline]);
 
-  async function create(name: string): Promise<{ testType: TestType | null; error: string | null }> {
+  async function create(input: NewTestTypeInput): Promise<{ testType: TestType | null; error: string | null }> {
     if (!profileId) return { testType: null, error: "No athlete profile loaded." };
 
-    const { testType, error } = await createTestType(profileId, { discipline, name, event_id: null });
+    const { testType, error } = await createTestType(profileId, {
+      discipline,
+      name: input.name,
+      event_id: null,
+      distance: input.distance,
+      reps: input.reps,
+      distance_per_rep: input.distancePerRep,
+      rest_seconds: input.restSeconds,
+    });
     if (testType) setTestTypes((current) => [...current, testType]);
     return { testType, error };
   }

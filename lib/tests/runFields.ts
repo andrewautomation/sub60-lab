@@ -8,8 +8,8 @@ import { parseDurationToSeconds } from "@/lib/parser/fieldUtils";
 export const RUN_TEST_FIELDS: TestFieldConfig[] = [
   { key: "test_date", label: "Date", type: "date", required: true },
   { key: "test_type_id", label: "Test type", type: "test_type", required: true },
-  { key: "distance_km", label: "Distance", type: "number", required: true, step: 0.01, unit: "km" },
-  { key: "time_seconds", label: "Time", type: "duration", required: true },
+  { key: "distance_km", label: "Distance", type: "number", required: true, step: 0.01, unit: "km", isDistance: true },
+  { key: "time_seconds", label: "Time", type: "duration", required: true, isTime: true },
   { key: "pace_per_km", label: "Pace / km", type: "text", placeholder: "e.g. 4:30" },
   { key: "avg_hr", label: "Avg HR", type: "number", unit: "bpm" },
   { key: "max_hr", label: "Max HR", type: "number", unit: "bpm" },
