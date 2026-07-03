@@ -20,18 +20,6 @@ export const REFERENCE_SECONDS: Record<string, Record<BadgeSex, number>> = {
   swim_100m_seconds: { male: 48, female: 53 },
   swim_400m_seconds: { male: 3 * 60 + 45, female: 4 * 60 + 2 },
   swim_1500m_seconds: { male: 14 * 60 + 35, female: 15 * 60 + 45 },
-
-  triathlon_super_sprint_seconds: { male: 55 * 60, female: 60 * 60 },
-  triathlon_sprint_seconds: { male: 55 * 60, female: 62 * 60 },
-  triathlon_olympic_seconds: { male: 105 * 60, female: 115 * 60 },
-  triathlon_half_iron_seconds: { male: 215 * 60, female: 245 * 60 },
-  triathlon_full_iron_seconds: { male: 465 * 60, female: 515 * 60 },
-
-  duathlon_sprint_seconds: { male: 55 * 60, female: 62 * 60 },
-  duathlon_standard_seconds: { male: 110 * 60, female: 125 * 60 },
-
-  aquathlon_sprint_seconds: { male: 25 * 60, female: 28 * 60 },
-  aquathlon_standard_seconds: { male: 48 * 60, female: 54 * 60 },
 };
 
 /** Coggan Power Profile-style FTP watts/kg bands, collapsed from its usual

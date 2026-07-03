@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { BENCHMARK_FIELDS_BY_SPORT } from "@/lib/benchmarks/fields";
+import { DISCIPLINE_LABEL, getBenchmarkFields } from "@/lib/benchmarks/fields";
+import { Discipline } from "@/lib/race/models";
 import { parseDurationToSeconds } from "@/lib/parser/fieldUtils";
 import { formatDuration } from "@/lib/format/time";
 import { OnboardingFormState } from "@/hooks/useOnboarding";
@@ -13,6 +14,8 @@ interface Props {
   onBack: () => void;
 }
 
+const DISCIPLINE_ORDER: Discipline[] = ["swim", "bike", "run"];
+
 /**
  * Entirely optional — every field here is a self-reported baseline used
  * only for the dashboard identity badge (lib/ranking), not for goals or
@@ -20,12 +23,18 @@ interface Props {
  * and "Next" are the same action; the distinction is purely copy, so an
  * athlete who filled nothing in doesn't feel like they missed a required
  * step.
+ *
+ * A multi-sport athlete (Triathlon/Duathlon/Aquathlon) gets the same
+ * single-discipline questions as everyone else, grouped under a heading
+ * per discipline they actually train — a 10K run time and a 400m swim
+ * time, not one combined "Olympic distance" field.
  */
 export default function BenchmarksStep({ data, updateData, onNext, onBack }: Props) {
   const [durationText, setDurationText] = useState<Record<string, string>>({});
 
   if (!data.primary_sport) return null;
-  const fields = BENCHMARK_FIELDS_BY_SPORT[data.primary_sport];
+  const fields = getBenchmarkFields(data.primary_sport);
+  const disciplines = DISCIPLINE_ORDER.filter((d) => fields.some((f) => f.discipline === d));
   const anyFilled = Object.values(data.benchmarks).some((v) => v !== null && v !== undefined);
 
   function setBenchmark(key: string, seconds: number | null) {
@@ -41,36 +50,49 @@ export default function BenchmarksStep({ data, updateData, onNext, onBack }: Pro
         them later in Settings.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {fields.map((field) => (
-          <div key={field.key}>
-            <label className="block text-sm text-slate-400 mb-1">{field.label}</label>
-            {field.type === "watts" ? (
-              <input
-                type="number"
-                min={0}
-                placeholder="e.g. 250"
-                className="w-full rounded-lg p-3 bg-slate-800"
-                value={(data.benchmarks[field.key] as number | undefined) ?? ""}
-                onChange={(e) => setBenchmark(field.key, e.target.value === "" ? null : Number(e.target.value))}
-              />
-            ) : (
-              <input
-                type="text"
-                placeholder="H:MM:SS"
-                className="w-full rounded-lg p-3 bg-slate-800"
-                value={
-                  durationText[field.key] ??
-                  (data.benchmarks[field.key] != null ? formatDuration(data.benchmarks[field.key] as number) : "")
-                }
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setDurationText((current) => ({ ...current, [field.key]: value }));
-                  const parsed = parseDurationToSeconds(value);
-                  setBenchmark(field.key, parsed && parsed > 0 ? parsed : null);
-                }}
-              />
-            )}
+      <div className="space-y-8">
+        {disciplines.map((discipline) => (
+          <div key={discipline}>
+            {disciplines.length > 1 && <h2 className="text-lg font-semibold mb-3">{DISCIPLINE_LABEL[discipline]}</h2>}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {fields
+                .filter((f) => f.discipline === discipline)
+                .map((field) => (
+                  <div key={field.key}>
+                    <label className="block text-sm text-slate-400 mb-1">{field.label}</label>
+                    {field.type === "watts" ? (
+                      <input
+                        type="number"
+                        min={0}
+                        placeholder="e.g. 250"
+                        className="w-full rounded-lg p-3 bg-slate-800"
+                        value={(data.benchmarks[field.key] as number | undefined) ?? ""}
+                        onChange={(e) =>
+                          setBenchmark(field.key, e.target.value === "" ? null : Number(e.target.value))
+                        }
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder="H:MM:SS"
+                        className="w-full rounded-lg p-3 bg-slate-800"
+                        value={
+                          durationText[field.key] ??
+                          (data.benchmarks[field.key] != null
+                            ? formatDuration(data.benchmarks[field.key] as number)
+                            : "")
+                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setDurationText((current) => ({ ...current, [field.key]: value }));
+                          const parsed = parseDurationToSeconds(value);
+                          setBenchmark(field.key, parsed && parsed > 0 ? parsed : null);
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+            </div>
           </div>
         ))}
       </div>

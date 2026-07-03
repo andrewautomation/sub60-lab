@@ -5,11 +5,14 @@ import { useProfileSettings } from "@/hooks/useProfileSettings";
 import { usePerformanceBenchmarks } from "@/hooks/usePerformanceBenchmarks";
 import { validateProfileStep } from "@/lib/validators/validateOnboarding";
 import { validatePassword } from "@/lib/validators/shared";
-import { BENCHMARK_FIELDS_BY_SPORT } from "@/lib/benchmarks/fields";
+import { DISCIPLINE_LABEL, getBenchmarkFields } from "@/lib/benchmarks/fields";
+import { Discipline } from "@/lib/race/models";
 import { parseDurationToSeconds } from "@/lib/parser/fieldUtils";
 import { formatDuration } from "@/lib/format/time";
 import ErrorState from "@/components/ErrorState";
 import { Sex } from "@/types/athlete";
+
+const DISCIPLINE_ORDER: Discipline[] = ["swim", "bike", "run"];
 
 const SEX_OPTIONS: { value: Sex; label: string }[] = [
   { value: "unspecified", label: "Prefer not to say" },
@@ -71,7 +74,7 @@ export default function SettingsPage() {
   // legitimately has no performance_profiles row yet).
   if (athlete && !benchmarksLoading && !benchmarksSeeded) {
     setBenchmarksSeeded(true);
-    const fields = BENCHMARK_FIELDS_BY_SPORT[athlete.primary_sport_id];
+    const fields = getBenchmarkFields(athlete.primary_sport_id);
     setBenchmarkValues(
       Object.fromEntries(fields.map((f) => [f.key, (benchmarks?.[f.key] as number | null) ?? null]))
     );
@@ -267,41 +270,63 @@ export default function SettingsPage() {
             <p className="text-slate-400">Loading...</p>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {BENCHMARK_FIELDS_BY_SPORT[athlete.primary_sport_id].map((field) => (
-                  <div key={field.key}>
-                    <label className="block text-sm text-slate-400 mb-1">{field.label}</label>
-                    {field.type === "watts" ? (
-                      <input
-                        type="number"
-                        min={0}
-                        placeholder="e.g. 250"
-                        className="w-full rounded-lg p-3 bg-slate-800"
-                        value={benchmarkValues[field.key] ?? ""}
-                        onChange={(e) =>
-                          updateBenchmarkValue(field.key, e.target.value === "" ? null : Number(e.target.value))
-                        }
-                      />
-                    ) : (
-                      <input
-                        type="text"
-                        placeholder="H:MM:SS"
-                        className="w-full rounded-lg p-3 bg-slate-800"
-                        value={
-                          benchmarkDurationText[field.key] ??
-                          (benchmarkValues[field.key] != null ? formatDuration(benchmarkValues[field.key] as number) : "")
-                        }
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setBenchmarkDurationText((current) => ({ ...current, [field.key]: value }));
-                          const parsed = parseDurationToSeconds(value);
-                          updateBenchmarkValue(field.key, parsed && parsed > 0 ? parsed : null);
-                        }}
-                      />
-                    )}
+              {(() => {
+                const fields = getBenchmarkFields(athlete.primary_sport_id);
+                const disciplines = DISCIPLINE_ORDER.filter((d) => fields.some((f) => f.discipline === d));
+                return (
+                  <div className="space-y-6">
+                    {disciplines.map((discipline) => (
+                      <div key={discipline}>
+                        {disciplines.length > 1 && (
+                          <h3 className="text-sm font-semibold text-slate-300 mb-3">{DISCIPLINE_LABEL[discipline]}</h3>
+                        )}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {fields
+                            .filter((f) => f.discipline === discipline)
+                            .map((field) => (
+                              <div key={field.key}>
+                                <label className="block text-sm text-slate-400 mb-1">{field.label}</label>
+                                {field.type === "watts" ? (
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    placeholder="e.g. 250"
+                                    className="w-full rounded-lg p-3 bg-slate-800"
+                                    value={benchmarkValues[field.key] ?? ""}
+                                    onChange={(e) =>
+                                      updateBenchmarkValue(
+                                        field.key,
+                                        e.target.value === "" ? null : Number(e.target.value)
+                                      )
+                                    }
+                                  />
+                                ) : (
+                                  <input
+                                    type="text"
+                                    placeholder="H:MM:SS"
+                                    className="w-full rounded-lg p-3 bg-slate-800"
+                                    value={
+                                      benchmarkDurationText[field.key] ??
+                                      (benchmarkValues[field.key] != null
+                                        ? formatDuration(benchmarkValues[field.key] as number)
+                                        : "")
+                                    }
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      setBenchmarkDurationText((current) => ({ ...current, [field.key]: value }));
+                                      const parsed = parseDurationToSeconds(value);
+                                      updateBenchmarkValue(field.key, parsed && parsed > 0 ? parsed : null);
+                                    }}
+                                  />
+                                )}
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
 
               {benchmarksError && <p className="mt-4 text-sm text-red-400">{benchmarksError}</p>}
               {benchmarksSaved && !benchmarksError && <p className="mt-4 text-sm text-emerald-400">Benchmarks saved.</p>}
