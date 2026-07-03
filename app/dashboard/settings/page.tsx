@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useProfileSettings } from "@/hooks/useProfileSettings";
 import { validateProfileStep } from "@/lib/validators/validateOnboarding";
 import { validatePassword } from "@/lib/validators/shared";
+import ErrorState from "@/components/ErrorState";
 import { Sex } from "@/types/athlete";
 
 const SEX_OPTIONS: { value: Sex; label: string }[] = [
@@ -23,7 +24,7 @@ interface ProfileFormValues {
 }
 
 export default function SettingsPage() {
-  const { athlete, loading, saveProfile, changePassword } = useProfileSettings();
+  const { athlete, loading, error, retry, saveProfile, changePassword } = useProfileSettings();
 
   const [profileValues, setProfileValues] = useState<ProfileFormValues | null>(null);
   const [seededId, setSeededId] = useState<string | null>(null);
@@ -103,6 +104,10 @@ export default function SettingsPage() {
 
   if (loading) {
     return <p className="text-slate-400">Loading your settings...</p>;
+  }
+
+  if (error) {
+    return <ErrorState message={`Couldn't load your settings: ${error}`} onRetry={retry} />;
   }
 
   if (!athlete || !profileValues) {

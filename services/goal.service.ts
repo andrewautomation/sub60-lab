@@ -17,8 +17,14 @@ export async function fetchGoalsForProfile(profileId: string): Promise<Goal[]> {
 /** The athlete's current goal for a given event, if any — the most
  * recently created active one. Events can accumulate goal history (a
  * "Sub-75" goal later replaced by "Sub-60"); this is what dashboards and
- * race prediction should read, not the full list. */
-export async function fetchActiveGoalForEvent(profileId: string, eventId: string): Promise<Goal | null> {
+ * race prediction should read, not the full list.
+ *
+ * `error` is only set for a genuine fetch failure — never for the
+ * legitimate "no active goal yet" case (`goal: null, error: null`). */
+export async function fetchActiveGoalForEvent(
+  profileId: string,
+  eventId: string
+): Promise<{ goal: Goal | null; error: string | null }> {
   const { data, error } = await supabase
     .from("goals")
     .select(GOAL_COLUMNS)
@@ -29,8 +35,8 @@ export async function fetchActiveGoalForEvent(profileId: string, eventId: string
     .limit(1)
     .maybeSingle();
 
-  if (error || !data) return null;
-  return data;
+  if (error) return { goal: null, error: error.message };
+  return { goal: data, error: null };
 }
 
 export async function createGoal(input: NewGoal): Promise<{ error: string | null }> {

@@ -10,18 +10,23 @@ import {
 import { NewRunTest, RunTest } from "@/types/run";
 
 /** Loads run tests and exposes create/edit/remove wrapping
- * services/run.service.ts, so pages never call the service directly. */
+ * services/run.service.ts, so pages never call the service directly.
+ * `error` is only set on a genuine fetch failure — never for "no tests
+ * yet" — so pages can show a retryable error instead of a false
+ * empty-state. */
 export function useRunTests() {
   const [tests, setTests] = useState<RunTest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
     async function load() {
-      const data = await fetchRunTests();
+      const { tests: data, error } = await fetchRunTests();
       if (active) {
         setTests(data);
+        setError(error);
         setLoading(false);
       }
     }
@@ -33,8 +38,9 @@ export function useRunTests() {
   }, []);
 
   async function refresh() {
-    const data = await fetchRunTests();
+    const { tests: data, error } = await fetchRunTests();
     setTests(data);
+    setError(error);
   }
 
   async function createTest(input: NewRunTest) {
@@ -55,5 +61,5 @@ export function useRunTests() {
     return { error };
   }
 
-  return { tests, loading, refresh, createTest, editTest, removeTest };
+  return { tests, loading, error, refresh, createTest, editTest, removeTest };
 }

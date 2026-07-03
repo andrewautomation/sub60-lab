@@ -4,14 +4,23 @@ import Link from "next/link";
 import DashboardCard from "@/components/DashboardCard";
 import KpiCard from "@/components/KpiCard";
 import PerformanceEngineSection from "@/components/PerformanceEngineSection";
+import ErrorState from "@/components/ErrorState";
 import { useDashboard } from "@/hooks/useDashboard";
 import { formatTime } from "@/lib/format/time";
 import { getPrimaryEventLabel } from "@/lib/athlete/domain";
 
 export default function Dashboard() {
-  const { loading, athlete, swim, bike, run, performanceEngine, logout } = useDashboard();
+  const { loading, error, retry, athlete, swim, bike, run, performanceEngine, logout } = useDashboard();
 
-  if (loading || !athlete) {
+  if (loading) {
+    return <div className="flex items-center justify-center">Loading...</div>;
+  }
+
+  if (error) {
+    return <ErrorState message={`Couldn't load your dashboard: ${error}`} onRetry={retry} />;
+  }
+
+  if (!athlete) {
     return <div className="flex items-center justify-center">Loading...</div>;
   }
 

@@ -22,19 +22,29 @@ function level(
  * entry here, nothing else changes.
  */
 export const GOAL_LADDERS: Record<string, GoalLevel[]> = {
+  // Super Sprint (400m/10km/2.5km) is roughly half the distance of Sprint
+  // (750m/20km/5km) — its ladder must be its own, tighter spread, not a
+  // copy of Sprint's. Sub-60 stays fixed at 60:00 because that's this
+  // app's literal namesake goal (see SUB_60_SPRINT_TARGETS in
+  // lib/analytics/targets.ts), so it anchors the ladder rather than
+  // scaling with the other rungs.
   [eventId("triathlon", "super_sprint")]: [
     level("finish", "Finish", "Complete the distance.", null),
-    level("sub_90", "Sub-90", "Finish in under 1:30:00.", 90 * 60),
     level("sub_75", "Sub-75", "Finish in under 1:15:00.", 75 * 60),
+    level("sub_65", "Sub-65", "Finish in under 1:05:00.", 65 * 60),
     level("sub_60", "Sub-60", "Finish in under 1:00:00 — this app's namesake goal.", 60 * 60),
-    level("elite", "Elite", "Finish in under 0:50:00.", 50 * 60),
+    level("elite", "Elite", "Finish in under 0:40:00.", 40 * 60),
   ],
+  // Sprint is the standard, longer distance — sub-60 here is a stretch
+  // goal (its own Elite rung, ~3599s to match RACE_TARGETS.sprint.
+  // goalSeconds in lib/race/targets.ts), not the mid-ladder milestone it
+  // is for Super Sprint.
   [eventId("triathlon", "sprint")]: [
     level("finish", "Finish", "Complete the distance.", null),
+    level("sub_105", "Sub-105", "Finish in under 1:45:00.", 105 * 60),
     level("sub_90", "Sub-90", "Finish in under 1:30:00.", 90 * 60),
     level("sub_75", "Sub-75", "Finish in under 1:15:00.", 75 * 60),
-    level("sub_60", "Sub-60", "Finish in under 1:00:00.", 60 * 60),
-    level("elite", "Elite", "Finish in under 0:55:00.", 55 * 60),
+    level("elite", "Elite", "Finish in under 0:59:59 — the standard-distance sub-60 goal.", 3599),
   ],
   [eventId("triathlon", "olympic")]: [
     level("finish", "Finish", "Complete the distance.", null),

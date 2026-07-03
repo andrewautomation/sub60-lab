@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import TestHistoryTable from "@/components/tests/TestHistoryTable";
 import TestProgressChart from "@/components/tests/TestProgressChart";
+import ErrorState from "@/components/ErrorState";
 import { useRunTests } from "@/hooks/useRunTests";
 import { getAveragePace, getBestPace, getGapToTargetPace } from "@/lib/analytics/run.analytics";
 import { getLatestTest, sortByDateAscending } from "@/lib/analytics/shared";
@@ -17,10 +18,14 @@ function paceSecondsPerKm(test: RunTest): number {
 
 export default function RunPage() {
   const router = useRouter();
-  const { tests, loading, removeTest } = useRunTests();
+  const { tests, loading, error, refresh, removeTest } = useRunTests();
 
   if (loading) {
     return <p className="text-slate-400">Loading run data...</p>;
+  }
+
+  if (error) {
+    return <ErrorState message={`Couldn't load your run data: ${error}`} onRetry={refresh} />;
   }
 
   const pb = getBestPace(tests);

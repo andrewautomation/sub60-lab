@@ -6,11 +6,17 @@ const PROFILE_COLUMNS =
 
 /** The signed-in user's athlete profile, or null if they haven't created
  * one yet. RLS scopes this to the caller's own row, so there's never a
- * need to filter by user_id explicitly here. */
-export async function fetchProfile(): Promise<Athlete | null> {
+ * need to filter by user_id explicitly here.
+ *
+ * `error` is only set for a genuine fetch failure (network, RLS, etc) —
+ * never for the legitimate "no profile yet" case, which is `profile: null,
+ * error: null`. Callers must check `error` before treating a null profile
+ * as "onboarding not done yet": collapsing the two looks identical to a
+ * signed-in athlete as either a fresh account or a broken one. */
+export async function fetchProfile(): Promise<{ profile: Athlete | null; error: string | null }> {
   const { data, error } = await supabase.from("profiles").select(PROFILE_COLUMNS).maybeSingle();
-  if (error || !data) return null;
-  return data;
+  if (error) return { profile: null, error: error.message };
+  return { profile: data, error: null };
 }
 
 export async function fetchProfileById(profileId: string): Promise<Athlete | null> {

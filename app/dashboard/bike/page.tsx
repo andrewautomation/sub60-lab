@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import TestHistoryTable from "@/components/tests/TestHistoryTable";
 import TestProgressChart from "@/components/tests/TestProgressChart";
+import ErrorState from "@/components/ErrorState";
 import { useBikeTests } from "@/hooks/useBikeTests";
 import { getAverageSpeed, getBestSpeed, getGapToTargetSpeed } from "@/lib/analytics/bike.analytics";
 import { getLatestTest, sortByDateAscending } from "@/lib/analytics/shared";
@@ -12,10 +13,14 @@ import { formatTime } from "@/lib/format/time";
 
 export default function BikePage() {
   const router = useRouter();
-  const { tests, loading, removeTest } = useBikeTests();
+  const { tests, loading, error, refresh, removeTest } = useBikeTests();
 
   if (loading) {
     return <p className="text-slate-400">Loading bike data...</p>;
+  }
+
+  if (error) {
+    return <ErrorState message={`Couldn't load your bike data: ${error}`} onRetry={refresh} />;
   }
 
   const pb = getBestSpeed(tests);

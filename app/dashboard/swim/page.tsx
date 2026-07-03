@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import TestHistoryTable from "@/components/tests/TestHistoryTable";
 import TestProgressChart from "@/components/tests/TestProgressChart";
+import ErrorState from "@/components/ErrorState";
 import { useSwimTests } from "@/hooks/useSwimTests";
 import {
   getAverageTime,
@@ -16,10 +17,14 @@ import { formatTime } from "@/lib/format/time";
 
 export default function SwimPage() {
   const router = useRouter();
-  const { tests, loading, removeTest } = useSwimTests();
+  const { tests, loading, error, refresh, removeTest } = useSwimTests();
 
   if (loading) {
     return <p className="text-slate-400">Loading swim data...</p>;
+  }
+
+  if (error) {
+    return <ErrorState message={`Couldn't load your swim data: ${error}`} onRetry={refresh} />;
   }
 
   const pb = getPersonalBest(tests);

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import ErrorState from "@/components/ErrorState";
 import { getSession } from "@/services/auth.service";
 import { fetchProfile } from "@/services/profile.service";
 import { hasCompletedOnboarding } from "@/lib/athlete/domain";
@@ -20,19 +21,30 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
 
     async function guard() {
       const { data: sessionData } = await getSession();
+      if (!active) return;
       if (!sessionData.session) {
         router.push("/login");
         return;
       }
 
-      const profile = await fetchProfile();
+      const { profile, error } = await fetchProfile();
       if (!active) return;
+
+      // A genuine fetch failure must never be treated as "onboarding not
+      // done yet" — that would boot an already-onboarded athlete back into
+      // the setup wizard on a transient network blip.
+      if (error) {
+        setLoadError(error);
+        return;
+      }
 
       if (!profile || !hasCompletedOnboarding(profile)) {
         router.push("/onboarding");
@@ -42,11 +54,28 @@ export default function DashboardLayout({
       setChecked(true);
     }
 
-    guard();
+    guard().catch(() => {
+      if (active) setLoadError("Something went wrong loading your account.");
+    });
     return () => {
       active = false;
     };
-  }, [router]);
+  }, [router, reloadKey]);
+
+  function retry() {
+    setLoadError(null);
+    setReloadKey((k) => k + 1);
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-950 p-6">
+        <div className="w-full max-w-md">
+          <ErrorState message={`Couldn't load your account: ${loadError}`} onRetry={retry} />
+        </div>
+      </div>
+    );
+  }
 
   if (!checked) {
     return (

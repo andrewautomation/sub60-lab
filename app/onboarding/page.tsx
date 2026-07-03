@@ -7,10 +7,13 @@ import EventStep from "@/components/onboarding/EventStep";
 import ProfileStep from "@/components/onboarding/ProfileStep";
 import GoalStep from "@/components/onboarding/GoalStep";
 import ReviewStep from "@/components/onboarding/ReviewStep";
+import ErrorState from "@/components/ErrorState";
 
 export default function OnboardingPage() {
   const {
     initializing,
+    initError,
+    retryInit,
     step,
     stepIndex,
     data,
@@ -22,6 +25,10 @@ export default function OnboardingPage() {
     submitError,
     submitSuccess,
   } = useOnboarding();
+
+  if (initError) {
+    return <ErrorState message={`Couldn't load your account: ${initError}`} onRetry={retryInit} />;
+  }
 
   if (initializing) {
     return <div className="flex items-center justify-center py-24 text-slate-400">Loading...</div>;

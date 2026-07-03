@@ -15,26 +15,44 @@ export interface ChangeGoalInput {
 /** Loads the signed-in athlete's profile and their active goal for their
  * primary event, and exposes changeGoal to replace it — abandoning the
  * current goal (if any) and creating a new active one, so goal history is
- * preserved rather than overwritten in place. */
+ * preserved rather than overwritten in place. `error` is only set on a
+ * genuine fetch failure — never for "no goal set yet" — so the page can
+ * show a retryable error instead of a misleading "no profile" message. */
 export function useGoals() {
   const [athlete, setAthlete] = useState<Athlete | null>(null);
   const [goal, setGoal] = useState<Goal | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
     async function load() {
-      const profile = await fetchProfile();
+      const { profile, error: profileError } = await fetchProfile();
       if (!active) return;
+
+      if (profileError) {
+        setError(profileError);
+        setLoading(false);
+        return;
+      }
 
       if (!profile) {
         setLoading(false);
         return;
       }
 
-      const activeGoal = await fetchActiveGoalForEvent(profile.id, profile.primary_event_id);
+      const { goal: activeGoal, error: goalError } = await fetchActiveGoalForEvent(
+        profile.id,
+        profile.primary_event_id
+      );
       if (!active) return;
+
+      if (goalError) {
+        setError(goalError);
+        setLoading(false);
+        return;
+      }
 
       setAthlete(profile);
       setGoal(activeGoal);
@@ -48,9 +66,22 @@ export function useGoals() {
   }, []);
 
   async function refresh() {
-    const profile = await fetchProfile();
+    const { profile, error: profileError } = await fetchProfile();
+    if (profileError) {
+      setError(profileError);
+      return;
+    }
     if (!profile) return;
-    const activeGoal = await fetchActiveGoalForEvent(profile.id, profile.primary_event_id);
+
+    const { goal: activeGoal, error: goalError } = await fetchActiveGoalForEvent(
+      profile.id,
+      profile.primary_event_id
+    );
+    if (goalError) {
+      setError(goalError);
+      return;
+    }
+
     setAthlete(profile);
     setGoal(activeGoal);
   }
@@ -76,5 +107,18 @@ export function useGoals() {
     return { error: null };
   }
 
-  return { athlete, goal, loading, changeGoal };
+  /** Closes out the current goal as achieved rather than abandoned —
+   * distinct history for "hit it" vs "gave up on it." Leaves the athlete
+   * with no active goal for this event until they set a new one. */
+  async function markGoalAchieved(): Promise<{ error: string | null }> {
+    if (!goal) return { error: "No active goal to mark achieved." };
+
+    const { error } = await updateGoalStatus(goal.id, "achieved");
+    if (error) return { error };
+
+    await refresh();
+    return { error: null };
+  }
+
+  return { athlete, goal, loading, error, refresh, changeGoal, markGoalAchieved };
 }

@@ -18,14 +18,17 @@ export type ProfileEditableFields = Pick<
 export function useProfileSettings() {
   const [athlete, setAthlete] = useState<Athlete | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
 
     async function load() {
-      const profile = await fetchProfile();
+      const { profile, error } = await fetchProfile();
       if (!active) return;
       setAthlete(profile);
+      setError(error);
       setLoading(false);
     }
 
@@ -33,7 +36,13 @@ export function useProfileSettings() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadKey]);
+
+  function retry() {
+    setLoading(true);
+    setError(null);
+    setReloadKey((k) => k + 1);
+  }
 
   async function saveProfile(patch: ProfileEditableFields): Promise<{ error: string | null }> {
     if (!athlete) return { error: "No profile loaded." };
@@ -59,5 +68,5 @@ export function useProfileSettings() {
     return { error: error?.message ?? null };
   }
 
-  return { athlete, loading, saveProfile, changePassword };
+  return { athlete, loading, error, retry, saveProfile, changePassword };
 }

@@ -10,18 +10,23 @@ import {
 import { NewSwimTest, SwimTest } from "@/types/swim";
 
 /** Loads swim tests and exposes create/edit/remove wrapping
- * services/swim.service.ts, so pages never call the service directly. */
+ * services/swim.service.ts, so pages never call the service directly.
+ * `error` is only set on a genuine fetch failure — never for "no tests
+ * yet" — so pages can show a retryable error instead of a false
+ * empty-state. */
 export function useSwimTests() {
   const [tests, setTests] = useState<SwimTest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
     async function load() {
-      const data = await fetchSwimTests();
+      const { tests: data, error } = await fetchSwimTests();
       if (active) {
         setTests(data);
+        setError(error);
         setLoading(false);
       }
     }
@@ -33,8 +38,9 @@ export function useSwimTests() {
   }, []);
 
   async function refresh() {
-    const data = await fetchSwimTests();
+    const { tests: data, error } = await fetchSwimTests();
     setTests(data);
+    setError(error);
   }
 
   async function createTest(input: NewSwimTest) {
@@ -55,5 +61,5 @@ export function useSwimTests() {
     return { error };
   }
 
-  return { tests, loading, refresh, createTest, editTest, removeTest };
+  return { tests, loading, error, refresh, createTest, editTest, removeTest };
 }

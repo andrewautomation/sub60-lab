@@ -3,6 +3,7 @@
 import { getEvent, getSport } from "@/lib/sports/registry";
 import { getGoalLevel } from "@/lib/goals/registry";
 import { eventId } from "@/lib/sports/registry";
+import { formatDuration } from "@/lib/format/time";
 import { OnboardingFormState } from "@/hooks/useOnboarding";
 
 interface Props {
@@ -31,6 +32,11 @@ export default function ReviewStep({ data, onBack, onSubmit, submitting, submitE
   const goalLevel = data.goal_level_key
     ? getGoalLevel(eventId(data.primary_sport, data.primary_event_key), data.goal_level_key)
     : null;
+  const goalDisplay = goalLevel
+    ? goalLevel.display_name
+    : data.goal_custom_target_seconds !== null
+      ? `Custom — ${formatDuration(data.goal_custom_target_seconds)}`
+      : "Not set";
 
   if (submitSuccess) {
     return (
@@ -52,7 +58,7 @@ export default function ReviewStep({ data, onBack, onSubmit, submitting, submitE
         <Row label="Sport" value={`${sport.emoji} ${sport.label}`} />
         <Row label="Event" value={event?.label ?? "—"} />
         <Row label="Country" value={data.country ?? "—"} />
-        <Row label="Goal" value={goalLevel?.display_name ?? "Not set"} />
+        <Row label="Goal" value={goalDisplay} />
       </div>
 
       {submitError && <p className="mt-4 text-sm text-red-400">{submitError}</p>}

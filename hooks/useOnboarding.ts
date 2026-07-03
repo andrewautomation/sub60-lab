@@ -25,8 +25,14 @@ export interface OnboardingFormState {
   weight_kg: number | null;
   country: string | null;
   /** Set only when the chosen event has a curated goal ladder — see
-   * lib/goals/registry.ts hasGoalLadder(). */
+   * lib/goals/registry.ts hasGoalLadder(). Mutually exclusive with
+   * goal_custom_target_seconds (mirrors the goals table's check
+   * constraint: exactly one of level_key / custom_target_value). */
   goal_level_key: string | null;
+  /** Athlete-entered target time in seconds, used instead of a ladder rung
+   * — either because they picked "Custom" or because this event has no
+   * curated ladder at all. */
+  goal_custom_target_seconds: number | null;
 }
 
 const INITIAL_STATE: OnboardingFormState = {
@@ -40,6 +46,7 @@ const INITIAL_STATE: OnboardingFormState = {
   weight_kg: null,
   country: null,
   goal_level_key: null,
+  goal_custom_target_seconds: null,
 };
 
 const DRAFT_KEY_PREFIX = "sub60_onboarding_draft:";
@@ -80,12 +87,14 @@ function clearDraft(userId: string) {
 export function useOnboarding() {
   const router = useRouter();
   const [initializing, setInitializing] = useState(true);
+  const [initError, setInitError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [data, setData] = useState<OnboardingFormState>(INITIAL_STATE);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -99,8 +108,17 @@ export function useOnboarding() {
         return;
       }
 
-      const profile = await fetchProfile();
+      const { profile, error: profileError } = await fetchProfile();
       if (!active) return;
+
+      // A genuine fetch failure must not be treated as "no profile yet" —
+      // that would send an already-onboarded athlete back through the
+      // wizard, and re-submitting would overwrite their real profile.
+      if (profileError) {
+        setInitError(profileError);
+        setInitializing(false);
+        return;
+      }
 
       if (profile && hasCompletedOnboarding(profile)) {
         router.push("/dashboard");
@@ -117,11 +135,22 @@ export function useOnboarding() {
       setInitializing(false);
     }
 
-    bootstrap();
+    bootstrap().catch(() => {
+      if (active) {
+        setInitError("Something went wrong loading your account.");
+        setInitializing(false);
+      }
+    });
     return () => {
       active = false;
     };
-  }, [router]);
+  }, [router, reloadKey]);
+
+  function retryInit() {
+    setInitializing(true);
+    setInitError(null);
+    setReloadKey((k) => k + 1);
+  }
 
   useEffect(() => {
     if (!userId || initializing) return;
@@ -172,12 +201,12 @@ export function useOnboarding() {
       return;
     }
 
-    if (data.goal_level_key) {
+    if (data.goal_level_key || data.goal_custom_target_seconds !== null) {
       const { error: goalError } = await createGoal({
         profile_id: profile.id,
         event_id: composedEventId,
         level_key: data.goal_level_key,
-        custom_target_value: null,
+        custom_target_value: data.goal_level_key ? null : data.goal_custom_target_seconds,
         target_date: null,
       });
 
@@ -203,6 +232,8 @@ export function useOnboarding() {
 
   return {
     initializing,
+    initError,
+    retryInit,
     step,
     stepIndex,
     totalSteps: ONBOARDING_STEPS.length,

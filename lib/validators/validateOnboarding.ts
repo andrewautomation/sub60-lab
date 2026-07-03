@@ -78,21 +78,26 @@ export function validateProfileStep(input: {
 /**
  * A goal is required only when the chosen event has a curated ladder to pick
  * from (lib/goals/catalog.ts) — an event without one (e.g. Cycling FTP Test
- * today) has nothing to choose, so onboarding shouldn't block on it. See
- * GoalStep.tsx for the corresponding "no predefined goals yet" UI state.
+ * today) has nothing to choose, so onboarding shouldn't block on it unless
+ * the athlete opts into a custom target themselves. A custom target time
+ * (goals.custom_target_value) is always an acceptable substitute for a
+ * ladder pick — see the "Custom" option in GoalStep.tsx.
  */
 export function validateGoalStep(
   sport: SportKey | null,
   eventKey: string | null,
-  goalLevelKey: string | null
+  goalLevelKey: string | null,
+  customTargetSeconds: number | null = null
 ): StepValidation {
   if (!sport || !eventKey) return fail({ goal_level_key: "Choose a sport and event first." });
+
+  if (customTargetSeconds !== null && customTargetSeconds > 0) return ok();
 
   const id = eventId(sport, eventKey);
   if (!hasGoalLadder(id)) return ok();
 
   if (!goalLevelKey || !getGoalLevel(id, goalLevelKey)) {
-    return fail({ goal_level_key: "Choose a goal to continue." });
+    return fail({ goal_level_key: "Choose a goal, or enter a custom target time, to continue." });
   }
 
   return ok();

@@ -31,15 +31,17 @@ const EMPTY_SUMMARY: DashboardSummary = {
 export function useDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [athlete, setAthlete] = useState<Athlete | null>(null);
   const [summary, setSummary] = useState<DashboardSummary>(EMPTY_SUMMARY);
   const [performanceEngine, setPerformanceEngine] = useState<PerformanceEngineResult | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
 
     async function load() {
-      const [profile, swimTests, bikeTests, runTests] = await Promise.all([
+      const [profileResult, swimResult, bikeResult, runResult] = await Promise.all([
         fetchProfile(),
         fetchSwimTests(),
         fetchBikeTests(),
@@ -47,6 +49,20 @@ export function useDashboard() {
       ]);
 
       if (!active) return;
+
+      // Any genuine fetch failure here must not render like "no data yet" —
+      // an athlete with months of history would read that as data loss.
+      const fetchError = profileResult.error ?? swimResult.error ?? bikeResult.error ?? runResult.error;
+      if (fetchError) {
+        setError(fetchError);
+        setLoading(false);
+        return;
+      }
+
+      const profile = profileResult.profile;
+      const swimTests = swimResult.tests;
+      const bikeTests = bikeResult.tests;
+      const runTests = runResult.tests;
 
       setAthlete(profile);
       setSummary({
@@ -68,8 +84,13 @@ export function useDashboard() {
       });
 
       if (profile) {
-        const goal = await fetchActiveGoalForEvent(profile.id, profile.primary_event_id);
+        const { goal, error: goalError } = await fetchActiveGoalForEvent(profile.id, profile.primary_event_id);
         if (!active) return;
+        if (goalError) {
+          setError(goalError);
+          setLoading(false);
+          return;
+        }
         setPerformanceEngine(runPerformanceEngine({ athlete: profile, goal, swimTests, bikeTests, runTests }));
       }
 
@@ -80,12 +101,18 @@ export function useDashboard() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadKey]);
+
+  function retry() {
+    setLoading(true);
+    setError(null);
+    setReloadKey((k) => k + 1);
+  }
 
   async function logout() {
     await signOut();
     router.push("/login");
   }
 
-  return { loading, athlete, ...summary, performanceEngine, logout };
+  return { loading, error, retry, athlete, ...summary, performanceEngine, logout };
 }

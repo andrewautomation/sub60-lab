@@ -4,14 +4,18 @@ import { NewRunTest, RunTest } from "@/types/run";
 const RUN_TEST_COLUMNS =
   "id, test_date, test_type, distance_km, time_seconds, pace_per_km, avg_hr, max_hr, avg_cadence, stride_length_m, notes";
 
-export async function fetchRunTests(): Promise<RunTest[]> {
+/** `error` is only set for a genuine fetch failure — never for the
+ * legitimate "no tests logged yet" case (`tests: [], error: null`).
+ * Callers must check `error` before rendering an empty-state, or a
+ * network blip reads to the athlete as lost history. */
+export async function fetchRunTests(): Promise<{ tests: RunTest[]; error: string | null }> {
   const { data, error } = await supabase
     .from("run_tests")
     .select(RUN_TEST_COLUMNS)
     .order("test_date", { ascending: false });
 
-  if (error || !data) return [];
-  return data;
+  if (error) return { tests: [], error: error.message };
+  return { tests: data ?? [], error: null };
 }
 
 export async function insertRunTest(

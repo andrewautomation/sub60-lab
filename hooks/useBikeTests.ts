@@ -10,18 +10,23 @@ import {
 import { BikeTest, NewBikeTest } from "@/types/bike";
 
 /** Loads bike tests and exposes create/edit/remove wrapping
- * services/bike.service.ts, so pages never call the service directly. */
+ * services/bike.service.ts, so pages never call the service directly.
+ * `error` is only set on a genuine fetch failure — never for "no tests
+ * yet" — so pages can show a retryable error instead of a false
+ * empty-state. */
 export function useBikeTests() {
   const [tests, setTests] = useState<BikeTest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
     async function load() {
-      const data = await fetchBikeTests();
+      const { tests: data, error } = await fetchBikeTests();
       if (active) {
         setTests(data);
+        setError(error);
         setLoading(false);
       }
     }
@@ -33,8 +38,9 @@ export function useBikeTests() {
   }, []);
 
   async function refresh() {
-    const data = await fetchBikeTests();
+    const { tests: data, error } = await fetchBikeTests();
     setTests(data);
+    setError(error);
   }
 
   async function createTest(input: NewBikeTest) {
@@ -55,5 +61,5 @@ export function useBikeTests() {
     return { error };
   }
 
-  return { tests, loading, refresh, createTest, editTest, removeTest };
+  return { tests, loading, error, refresh, createTest, editTest, removeTest };
 }

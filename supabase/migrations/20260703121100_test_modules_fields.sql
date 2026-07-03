@@ -15,12 +15,30 @@ alter table bike_tests
   add column if not exists avg_cadence integer;
 
 -- Backfill the renamed cadence column so existing imported rides don't
--- silently lose their cadence in the new UI.
-update bike_tests set avg_cadence = cadence where avg_cadence is null and cadence is not null;
+-- silently lose their cadence in the new UI. Guarded because the legacy
+-- "cadence" column doesn't exist everywhere this migration runs (e.g. a
+-- fresh local db, or a remote where avg_cadence was already added directly).
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_name = 'bike_tests' and column_name = 'cadence'
+  ) then
+    update bike_tests set avg_cadence = cadence where avg_cadence is null and cadence is not null;
+  end if;
+end $$;
 
 alter table run_tests
   add column if not exists notes text,
   add column if not exists avg_cadence integer,
   add column if not exists stride_length_m numeric;
 
-update run_tests set avg_cadence = cadence where avg_cadence is null and cadence is not null;
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_name = 'run_tests' and column_name = 'cadence'
+  ) then
+    update run_tests set avg_cadence = cadence where avg_cadence is null and cadence is not null;
+  end if;
+end $$;
