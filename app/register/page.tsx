@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { signUp } from "@/services/auth.service";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,7 +30,7 @@ export default function RegisterPage() {
     setLoading(true);
     setError(null);
 
-    const { error } = await signUp(
+    const { data, error } = await signUp(
       email.trim(),
       password,
       `${window.location.origin}/login`
@@ -38,6 +40,11 @@ export default function RegisterPage() {
 
     if (error) {
       setError(error.message);
+      return;
+    }
+
+    if (data.session) {
+      router.push("/dashboard");
       return;
     }
 
