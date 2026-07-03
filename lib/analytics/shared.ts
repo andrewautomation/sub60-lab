@@ -172,6 +172,14 @@ export function takeMostRecent<T extends { test_date: string }>(
   return sortByDateAscending(items).slice(-count);
 }
 
+/** Most recently dated test, or null for an empty list — the "latest
+ * result" every discipline's dashboard/history view needs. */
+export function getLatestTest<T extends { test_date: string }>(items: T[]): T | null {
+  if (items.length === 0) return null;
+  const chronological = sortByDateAscending(items);
+  return chronological[chronological.length - 1];
+}
+
 export function groupByMonth<T extends { test_date: string }>(
   items: T[]
 ): Map<string, T[]> {

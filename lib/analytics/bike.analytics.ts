@@ -14,13 +14,6 @@ import {
 /** Relative weights for getPerformanceScore's composite 0-100 score. */
 const SCORE_WEIGHTS = { target: 0.5, trend: 0.3, consistency: 0.2 };
 
-export function getFTPTrend(tests: BikeTest[], windowSize = 3): TrendResult {
-  const withFtp = sortByDateAscending(tests).filter(
-    (t): t is BikeTest & { ftp: number } => t.ftp !== null
-  );
-  return detectTrend(withFtp.map((t) => t.ftp), "higherIsBetter", windowSize);
-}
-
 export function getBestPower(tests: BikeTest[]): BikeTest | null {
   const withPower = tests.filter((t) => t.avg_power !== null);
   if (withPower.length === 0) return null;
@@ -38,7 +31,14 @@ export function getAveragePower(tests: BikeTest[]): number | null {
 
 export function getAverageCadence(tests: BikeTest[]): number | null {
   const values = tests
-    .map((t) => t.cadence)
+    .map((t) => t.avg_cadence)
+    .filter((v): v is number => v !== null);
+  return average(values);
+}
+
+export function getAverageSpeed(tests: BikeTest[]): number | null {
+  const values = tests
+    .map((t) => t.avg_speed_kmh)
     .filter((v): v is number => v !== null);
   return average(values);
 }

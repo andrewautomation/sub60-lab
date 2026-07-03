@@ -5,13 +5,27 @@ import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
 import SportStep from "@/components/onboarding/SportStep";
 import EventStep from "@/components/onboarding/EventStep";
 import ProfileStep from "@/components/onboarding/ProfileStep";
-import EquipmentStep from "@/components/onboarding/EquipmentStep";
-import BaselineStep from "@/components/onboarding/BaselineStep";
 import GoalStep from "@/components/onboarding/GoalStep";
 import ReviewStep from "@/components/onboarding/ReviewStep";
 
 export default function OnboardingPage() {
-  const { step, stepIndex, data, updateData, goNext, goBack, submit, submitting, submitError } = useOnboarding();
+  const {
+    initializing,
+    step,
+    stepIndex,
+    data,
+    updateData,
+    goNext,
+    goBack,
+    submit,
+    submitting,
+    submitError,
+    submitSuccess,
+  } = useOnboarding();
+
+  if (initializing) {
+    return <div className="flex items-center justify-center py-24 text-slate-400">Loading...</div>;
+  }
 
   return (
     <div>
@@ -21,13 +35,16 @@ export default function OnboardingPage() {
       {step === "sport" && <SportStep data={data} updateData={updateData} onNext={goNext} />}
       {step === "event" && <EventStep data={data} updateData={updateData} onNext={goNext} onBack={goBack} />}
       {step === "profile" && <ProfileStep data={data} updateData={updateData} onNext={goNext} onBack={goBack} />}
-      {step === "equipment" && (
-        <EquipmentStep data={data} updateData={updateData} onNext={goNext} onBack={goBack} />
-      )}
-      {step === "baseline" && <BaselineStep data={data} updateData={updateData} onNext={goNext} onBack={goBack} />}
       {step === "goal" && <GoalStep data={data} updateData={updateData} onNext={goNext} onBack={goBack} />}
       {step === "review" && (
-        <ReviewStep data={data} onBack={goBack} onSubmit={submit} submitting={submitting} submitError={submitError} />
+        <ReviewStep
+          data={data}
+          onBack={goBack}
+          onSubmit={submit}
+          submitting={submitting}
+          submitError={submitError}
+          submitSuccess={submitSuccess}
+        />
       )}
     </div>
   );

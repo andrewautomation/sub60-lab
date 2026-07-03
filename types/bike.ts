@@ -6,11 +6,12 @@ export interface BikeTest {
   time_seconds: number;
   avg_power: number | null;
   normalized_power: number | null;
-  ftp: number | null;
-  cadence: number | null;
+  max_power: number | null;
   avg_hr: number | null;
   max_hr: number | null;
+  avg_cadence: number | null;
   avg_speed_kmh: number | null;
+  notes: string | null;
 }
 
 export type NewBikeTest = Omit<BikeTest, "id">;

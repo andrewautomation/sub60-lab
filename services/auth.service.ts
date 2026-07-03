@@ -23,3 +23,23 @@ export async function signUp(
 export async function signOut() {
   return supabase.auth.signOut();
 }
+
+export async function resetPasswordForEmail(email: string, redirectTo: string) {
+  return supabase.auth.resetPasswordForEmail(email, { redirectTo });
+}
+
+export async function updatePassword(password: string) {
+  return supabase.auth.updateUser({ password });
+}
+
+/** Used by /reset-password to detect the recovery session Supabase
+ * establishes from the emailed link — returns the subscription so the
+ * caller can unsubscribe on unmount. */
+export function onPasswordRecovery(callback: () => void) {
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((event) => {
+    if (event === "PASSWORD_RECOVERY") callback();
+  });
+  return subscription;
+}

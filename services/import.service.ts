@@ -24,6 +24,7 @@ export async function saveParsedActivity(
       avg_hr: activity.avg_hr,
       max_hr: activity.max_hr,
       pool_length_m: activity.pool_length_m,
+      notes: null,
     });
   }
 
@@ -35,11 +36,12 @@ export async function saveParsedActivity(
       time_seconds: activity.time_seconds,
       avg_power: activity.avg_power,
       normalized_power: activity.normalized_power,
-      ftp: null,
-      cadence: activity.cadence,
+      max_power: null,
+      avg_cadence: activity.cadence,
       avg_hr: activity.avg_hr,
       max_hr: activity.max_hr,
       avg_speed_kmh: activity.avg_speed_kmh,
+      notes: null,
     });
   }
 
@@ -49,9 +51,10 @@ export async function saveParsedActivity(
     distance_km: activity.distance_km,
     time_seconds: activity.time_seconds,
     pace_per_km: activity.pace_per_km,
-    threshold_pace: null,
-    cadence: activity.cadence,
+    avg_cadence: activity.cadence,
+    stride_length_m: null,
     avg_hr: activity.avg_hr,
     max_hr: activity.max_hr,
+    notes: null,
   });
 }

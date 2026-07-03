@@ -40,11 +40,18 @@ function customEvent(): EventDefinition {
  * exactly one place that defines a race format's distances. */
 function triathlonEvent(format: RaceFormat, label: string): EventDefinition {
   const { distances } = getRaceTargets(format);
-  return raceEvent(format, label, [
-    { discipline: "swim", distance: distances.swimMeters },
-    { discipline: "bike", distance: distances.bikeKm },
-    { discipline: "run", distance: distances.runKm },
-  ]);
+  return {
+    ...raceEvent(format, label, [
+      { discipline: "swim", distance: distances.swimMeters },
+      { discipline: "bike", distance: distances.bikeKm },
+      { discipline: "run", distance: distances.runKm },
+    ]),
+    // raceEvent() doesn't set this — every triathlon event needs it so
+    // lib/athlete/domain.ts getPrimaryRaceFormat() (and everything built
+    // on it: lib/race/*, lib/performance-engine/*) can resolve which race
+    // format an athlete is actually training for.
+    raceFormat: format,
+  };
 }
 
 export const SPORT_CATALOG: Record<SportKey, SportDefinition> = {

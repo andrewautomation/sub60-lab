@@ -1,55 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import SwimProgressChart from "@/components/SwimProgressChart";
+import { useRouter } from "next/navigation";
+import TestHistoryTable from "@/components/tests/TestHistoryTable";
+import TestProgressChart from "@/components/tests/TestProgressChart";
 import { useSwimTests } from "@/hooks/useSwimTests";
 import {
-  getPersonalBest,
-  getAverageSwolf,
+  getAverageTime,
   getGapToTarget,
-  getLatestTrend,
-  getPerformanceScore,
+  getPersonalBest,
 } from "@/lib/analytics/swim.analytics";
+import { getLatestTest, sortByDateAscending } from "@/lib/analytics/shared";
+import { SWIM_TEST_COLUMNS } from "@/lib/tests/swimFields";
 import { formatTime } from "@/lib/format/time";
 
-const TREND_LABEL = {
-  improving: "▲ Improving",
-  stable: "▬ Stable",
-  declining: "▼ Declining",
-};
-
 export default function SwimPage() {
-  const { tests, loading } = useSwimTests();
+  const router = useRouter();
+  const { tests, loading, removeTest } = useSwimTests();
 
   if (loading) {
-    return <p>Loading swim data...</p>;
+    return <p className="text-slate-400">Loading swim data...</p>;
   }
 
   const pb = getPersonalBest(tests);
-
-  const avgSwolf = getAverageSwolf(tests);
-
+  const average = getAverageTime(tests);
+  const latest = getLatestTest(tests);
   const gap = getGapToTarget(tests);
-
-  const trend = tests.length > 0 ? getLatestTrend(tests) : null;
-
-  const performance = getPerformanceScore(tests);
 
   return (
     <div>
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
-          <p className="text-cyan-400 tracking-[0.3em] text-sm">
-            SWIM MODULE
-          </p>
+          <p className="text-cyan-400 tracking-[0.3em] text-sm">SWIM MODULE</p>
           <h1 className="text-4xl font-bold mt-2">🏊 Swim</h1>
         </div>
 
-        <div className="text-right">
-          <Link
-            href="/dashboard/swim/new"
-            className="rounded-lg bg-cyan-500 px-4 py-2 text-black font-semibold"
-          >
+        <div className="sm:text-right">
+          <Link href="/dashboard/swim/new" className="rounded-lg bg-cyan-500 px-4 py-2 text-black font-semibold">
             + New Swim Test
           </Link>
           <p className="mt-2 text-xs text-slate-500">
@@ -61,88 +48,56 @@ export default function SwimPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-10">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
         <div className="rounded-2xl bg-slate-900 p-5">
-          <p className="text-slate-400 text-sm">400 m PB</p>
+          <p className="text-slate-400 text-sm">Personal Best</p>
+          <p className="mt-2 text-3xl font-bold">{pb ? formatTime(pb.time_seconds) : "—"}</p>
+          <p className="text-sm text-slate-500">{pb ? `${pb.distance_m} m` : "No tests yet"}</p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-900 p-5">
+          <p className="text-slate-400 text-sm">Average Time</p>
+          <p className="mt-2 text-3xl font-bold">{average !== null ? formatTime(average) : "—"}</p>
+          <p className="text-sm text-slate-500">Across {tests.length} test{tests.length === 1 ? "" : "s"}</p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-900 p-5">
+          <p className="text-slate-400 text-sm">Latest Result</p>
+          <p className="mt-2 text-3xl font-bold">{latest ? formatTime(latest.time_seconds) : "—"}</p>
+          <p className="text-sm text-slate-500">{latest ? latest.test_date : "No tests yet"}</p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-900 p-5">
+          <p className="text-slate-400 text-sm">Gap to Goal</p>
           <p className="mt-2 text-3xl font-bold">
-            {pb ? formatTime(pb.time_seconds) : "—"}
+            {gap !== null ? `${gap > 0 ? "+" : ""}${gap.toFixed(1)}s` : "—"}
           </p>
-          <p className="text-sm text-slate-500">Best recorded swim test</p>
-        </div>
-
-        <div className="rounded-2xl bg-slate-900 p-5">
-          <p className="text-slate-400 text-sm">Average SWOLF</p>
-          <p className="mt-2 text-3xl font-bold">{avgSwolf ?? "—"}</p>
-          <p className="text-sm text-slate-500">Efficiency marker</p>
-        </div>
-
-        <div className="rounded-2xl bg-slate-900 p-5">
-          <p className="text-slate-400 text-sm">Tests Logged</p>
-          <p className="mt-2 text-3xl font-bold">{tests.length}</p>
-          <p className="text-sm text-slate-500">Swim tests in database</p>
-        </div>
-
-        <div className="rounded-2xl bg-slate-900 p-5">
-          <p className="text-slate-400 text-sm">Gap to 6:00</p>
-          <p className="mt-2 text-3xl font-bold">
-            {gap !== null ? `${gap.toFixed(1)}s` : "—"}
-          </p>
-          <p className="text-sm text-slate-500">Target 400 m swim</p>
-        </div>
-
-        <div className="rounded-2xl bg-slate-900 p-5">
-          <p className="text-slate-400 text-sm">Trend</p>
-          <p className="mt-2 text-3xl font-bold">
-            {trend ? TREND_LABEL[trend.trend] : "—"}
-          </p>
-          <p className="text-sm text-slate-500">Last few tests vs. before</p>
-        </div>
-
-        <div className="rounded-2xl bg-slate-900 p-5">
-          <p className="text-slate-400 text-sm">Performance Score</p>
-          <p className="mt-2 text-3xl font-bold">
-            {performance ? `${performance.score}/100` : "—"}
-          </p>
-          <p className="text-sm text-slate-500">Target · trend · consistency</p>
-        </div>
-      </div>
-
-      <div className="mt-10 rounded-2xl bg-slate-900 p-6">
-        <h2 className="text-2xl font-bold">Recent Swim Tests</h2>
-
-        <div className="mt-6 space-y-4">
-          {tests.map((test) => (
-            <div
-              key={test.id}
-              className="flex justify-between items-center rounded-xl bg-slate-800 p-4"
-            >
-              <div>
-                <p className="font-semibold">
-                  {test.test_type} — {test.distance_m} m
-                </p>
-                <p className="text-sm text-slate-400">{test.test_date}</p>
-              </div>
-
-              <div className="text-right">
-                <p className="text-xl font-bold">
-                  {formatTime(test.time_seconds)}
-                </p>
-                <p className="text-sm text-slate-400">
-                  {test.pace_per_100m} · SWOLF {test.swolf}
-                </p>
-              </div>
-            </div>
-          ))}
-
-          {tests.length === 0 && (
-            <p className="text-slate-400">No swim tests yet.</p>
-          )}
+          <p className="text-sm text-slate-500">400 m target</p>
         </div>
       </div>
 
       <div className="mt-10">
-        <SwimProgressChart data={tests} />
+        <h2 className="text-2xl font-bold mb-4">Test History</h2>
+        <TestHistoryTable
+          columns={SWIM_TEST_COLUMNS}
+          rows={tests}
+          onEdit={(id) => router.push(`/dashboard/swim/${id}/edit`)}
+          onDelete={removeTest}
+          emptyMessage="No swim tests yet — log one manually or import from Garmin."
+        />
       </div>
+
+      {tests.length > 0 && (
+        <div className="mt-10">
+          <TestProgressChart
+            title="Swim Progress"
+            data={sortByDateAscending(tests)}
+            xKey="test_date"
+            yKey="time_seconds"
+            reversed
+          />
+        </div>
+      )}
     </div>
   );
 }

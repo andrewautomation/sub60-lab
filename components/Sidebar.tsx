@@ -9,8 +9,6 @@ const links = [
   { href: "/dashboard/swim", label: "🏊 Swim" },
   { href: "/dashboard/bike", label: "🚴 Bike" },
   { href: "/dashboard/run", label: "🏃 Run" },
-  { href: "/dashboard/races", label: "🏁 Races" },
-  { href: "/dashboard/analytics", label: "📈 Analytics" },
   { href: "/dashboard/goals", label: "🎯 Goals" },
   { href: "/dashboard/settings", label: "⚙ Settings" },
 ];
@@ -19,7 +17,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800 min-h-screen">
+    <aside className="w-full md:w-64 bg-slate-900 border-r border-slate-800 md:min-h-screen">
       <div className="p-6">
         <h2 className="text-cyan-400 text-xl font-bold">
           SUB-60 LAB

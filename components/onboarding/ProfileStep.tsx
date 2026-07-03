@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { validateProfileStep } from "@/lib/validators/validateOnboarding";
 import { OnboardingFormState } from "@/hooks/useOnboarding";
-import { ExperienceLevel, Sex } from "@/types/athlete";
+import { Sex } from "@/types/athlete";
 
 interface Props {
   data: OnboardingFormState;
@@ -16,13 +16,6 @@ const SEX_OPTIONS: { value: Sex; label: string }[] = [
   { value: "unspecified", label: "Prefer not to say" },
   { value: "female", label: "Female" },
   { value: "male", label: "Male" },
-];
-
-const EXPERIENCE_OPTIONS: { value: ExperienceLevel; label: string }[] = [
-  { value: "beginner", label: "Beginner" },
-  { value: "intermediate", label: "Intermediate" },
-  { value: "advanced", label: "Advanced" },
-  { value: "elite", label: "Elite" },
 ];
 
 export default function ProfileStep({ data, updateData, onNext, onBack }: Props) {
@@ -40,31 +33,43 @@ export default function ProfileStep({ data, updateData, onNext, onBack }: Props)
   return (
     <div>
       <h1 className="text-3xl font-bold mb-2">Tell us about you</h1>
-      <p className="text-slate-400 mb-8">
-        Used to personalize targets and coaching — everything but your name is optional.
-      </p>
+      <p className="text-slate-400 mb-8">Used to personalize your targets.</p>
 
       <div className="space-y-4">
-        <div>
-          <input
-            className="w-full rounded-lg p-3 bg-slate-800"
-            placeholder="Name"
-            value={data.display_name}
-            onChange={(e) => updateData({ display_name: e.target.value })}
-          />
-          {errors.display_name && <p className="mt-1 text-sm text-red-400">{errors.display_name}</p>}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <input
+              className="w-full rounded-lg p-3 bg-slate-800"
+              placeholder="First name"
+              value={data.first_name}
+              onChange={(e) => updateData({ first_name: e.target.value })}
+            />
+            {errors.first_name && <p className="mt-1 text-sm text-red-400">{errors.first_name}</p>}
+          </div>
+          <div>
+            <input
+              className="w-full rounded-lg p-3 bg-slate-800"
+              placeholder="Last name"
+              value={data.last_name}
+              onChange={(e) => updateData({ last_name: e.target.value })}
+            />
+            {errors.last_name && <p className="mt-1 text-sm text-red-400">{errors.last_name}</p>}
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <input
-            type="date"
-            className="rounded-lg p-3 bg-slate-800"
-            value={data.date_of_birth ?? ""}
-            onChange={(e) => updateData({ date_of_birth: e.target.value || null })}
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <input
+              type="date"
+              className="w-full rounded-lg p-3 bg-slate-800"
+              value={data.birth_date ?? ""}
+              onChange={(e) => updateData({ birth_date: e.target.value || null })}
+            />
+            {errors.birth_date && <p className="mt-1 text-sm text-red-400">{errors.birth_date}</p>}
+          </div>
 
           <select
-            className="rounded-lg p-3 bg-slate-800"
+            className="w-full rounded-lg p-3 bg-slate-800"
             value={data.sex}
             onChange={(e) => updateData({ sex: e.target.value as Sex })}
           >
@@ -76,7 +81,7 @@ export default function ProfileStep({ data, updateData, onNext, onBack }: Props)
           </select>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <input
               type="number"
@@ -99,33 +104,14 @@ export default function ProfileStep({ data, updateData, onNext, onBack }: Props)
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <select
-            className="rounded-lg p-3 bg-slate-800"
-            value={data.experience_level}
-            onChange={(e) => updateData({ experience_level: e.target.value as ExperienceLevel })}
-          >
-            {EXPERIENCE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-
-          <div>
-            <input
-              type="number"
-              className="w-full rounded-lg p-3 bg-slate-800"
-              placeholder="Training days / week"
-              value={data.training_days_per_week ?? ""}
-              onChange={(e) =>
-                updateData({ training_days_per_week: e.target.value ? Number(e.target.value) : null })
-              }
-            />
-            {errors.training_days_per_week && (
-              <p className="mt-1 text-sm text-red-400">{errors.training_days_per_week}</p>
-            )}
-          </div>
+        <div>
+          <input
+            className="w-full rounded-lg p-3 bg-slate-800"
+            placeholder="Country"
+            value={data.country ?? ""}
+            onChange={(e) => updateData({ country: e.target.value || null })}
+          />
+          {errors.country && <p className="mt-1 text-sm text-red-400">{errors.country}</p>}
         </div>
       </div>
 

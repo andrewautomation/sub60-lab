@@ -1,7 +1,8 @@
 "use client";
 
 import { getEvent, getSport } from "@/lib/sports/registry";
-import { formatTime } from "@/lib/format/time";
+import { getGoalLevel } from "@/lib/goals/registry";
+import { eventId } from "@/lib/sports/registry";
 import { OnboardingFormState } from "@/hooks/useOnboarding";
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
   onSubmit: () => void;
   submitting: boolean;
   submitError: string | null;
+  submitSuccess: boolean;
 }
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -21,11 +23,24 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function ReviewStep({ data, onBack, onSubmit, submitting, submitError }: Props) {
+export default function ReviewStep({ data, onBack, onSubmit, submitting, submitError, submitSuccess }: Props) {
   if (!data.primary_sport || !data.primary_event_key) return null;
 
   const sport = getSport(data.primary_sport);
   const event = getEvent(data.primary_sport, data.primary_event_key);
+  const goalLevel = data.goal_level_key
+    ? getGoalLevel(eventId(data.primary_sport, data.primary_event_key), data.goal_level_key)
+    : null;
+
+  if (submitSuccess) {
+    return (
+      <div className="text-center py-16">
+        <div className="text-4xl mb-4">✅</div>
+        <h1 className="text-2xl font-bold mb-2">You&apos;re all set!</h1>
+        <p className="text-slate-400">Redirecting to your dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -33,20 +48,17 @@ export default function ReviewStep({ data, onBack, onSubmit, submitting, submitE
       <p className="text-slate-400 mb-8">Confirm before we set up your dashboard.</p>
 
       <div className="space-y-4 rounded-2xl bg-slate-900 p-6">
-        <Row label="Athlete" value={data.display_name || "—"} />
+        <Row label="Name" value={`${data.first_name} ${data.last_name}`.trim() || "—"} />
         <Row label="Sport" value={`${sport.emoji} ${sport.label}`} />
         <Row label="Event" value={event?.label ?? "—"} />
-        <Row
-          label="Goal time"
-          value={data.goal_target_time_seconds ? formatTime(data.goal_target_time_seconds) : "Not set"}
-        />
-        <Row label="Target date" value={data.goal_target_date ?? "Not set"} />
+        <Row label="Country" value={data.country ?? "—"} />
+        <Row label="Goal" value={goalLevel?.display_name ?? "Not set"} />
       </div>
 
       {submitError && <p className="mt-4 text-sm text-red-400">{submitError}</p>}
 
       <div className="mt-8 flex justify-between">
-        <button onClick={onBack} disabled={submitting} className="rounded-lg bg-slate-800 px-4 py-2">
+        <button onClick={onBack} disabled={submitting} className="rounded-lg bg-slate-800 px-4 py-2 disabled:opacity-60">
           Back
         </button>
         <button

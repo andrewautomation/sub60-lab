@@ -24,7 +24,7 @@ export default function ImportPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
           <p className="text-cyan-400 tracking-[0.3em] text-sm">
             GARMIN IMPORT

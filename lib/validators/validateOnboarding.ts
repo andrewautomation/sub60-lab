@@ -1,13 +1,7 @@
-import { isValidEvent } from "@/lib/sports/registry";
-import { Discipline, SportKey } from "@/lib/sports/types";
-import {
-  AthleteBaselines,
-  BikeBaselineInput,
-  ExperienceLevel,
-  RunBaselineInput,
-  Sex,
-  SwimBaselineInput,
-} from "@/types/athlete";
+import { eventId, isValidEvent } from "@/lib/sports/registry";
+import { getGoalLevel, hasGoalLadder } from "@/lib/goals/registry";
+import { SportKey } from "@/lib/sports/types";
+import { Sex } from "@/types/athlete";
 import { warnIfOutOfRange } from "./shared";
 
 /** Field-level errors block advancing to the next step; warnings (implausible
@@ -41,18 +35,35 @@ export function validateEventStep(sport: SportKey | null, eventKey: string | nul
 }
 
 export function validateProfileStep(input: {
-  display_name: string;
+  first_name: string;
+  last_name: string;
+  birth_date: string | null;
   sex: Sex;
-  experience_level: ExperienceLevel;
   height_cm: number | null;
   weight_kg: number | null;
-  training_days_per_week: number | null;
+  country: string | null;
 }): StepValidation {
   const errors: Record<string, string> = {};
   const warnings: Record<string, string> = {};
 
-  if (!input.display_name.trim()) {
-    errors.display_name = "Enter a name.";
+  if (!input.first_name.trim()) errors.first_name = "Enter your first name.";
+  if (!input.last_name.trim()) errors.last_name = "Enter your last name.";
+
+  if (!input.birth_date) {
+    errors.birth_date = "Enter your date of birth.";
+  } else {
+    const birth = new Date(input.birth_date);
+    if (Number.isNaN(birth.getTime())) {
+      errors.birth_date = "Enter a valid date.";
+    } else if (birth.getTime() > Date.now()) {
+      errors.birth_date = "Date of birth can't be in the future.";
+    } else if (new Date().getFullYear() - birth.getFullYear() > 120) {
+      errors.birth_date = "Enter a valid date of birth.";
+    }
+  }
+
+  if (!input.country || !input.country.trim()) {
+    errors.country = "Enter your country.";
   }
 
   const heightWarning = warnIfOutOfRange(input.height_cm, 100, 230, "Height", "cm");
@@ -61,72 +72,28 @@ export function validateProfileStep(input: {
   const weightWarning = warnIfOutOfRange(input.weight_kg, 30, 200, "Weight", "kg");
   if (weightWarning) warnings.weight_kg = weightWarning;
 
-  if (input.training_days_per_week !== null && (input.training_days_per_week < 0 || input.training_days_per_week > 14)) {
-    errors.training_days_per_week = "Training days must be between 0 and 14.";
-  }
-
   return Object.keys(errors).length === 0 ? ok(warnings) : fail(errors, warnings);
 }
 
-function validateSwimBaseline(baseline: SwimBaselineInput | undefined): string | null {
-  if (!baseline) return null;
-  if (baseline.distance_m <= 0) return "Enter a valid swim distance.";
-  if (baseline.time_seconds <= 0) return "Enter a valid swim time.";
-  return null;
-}
-
-function validateBikeBaseline(baseline: BikeBaselineInput | undefined): string | null {
-  if (!baseline) return null;
-  if (baseline.distance_km <= 0) return "Enter a valid bike distance.";
-  if (baseline.time_seconds <= 0) return "Enter a valid bike time.";
-  return null;
-}
-
-function validateRunBaseline(baseline: RunBaselineInput | undefined): string | null {
-  if (!baseline) return null;
-  if (baseline.distance_km <= 0) return "Enter a valid run distance.";
-  if (baseline.time_seconds <= 0) return "Enter a valid run time.";
-  return null;
-}
-
 /**
- * Baselines are optional per discipline — an athlete with no recent test
- * data can skip straight to goals. But a discipline that's partially
- * filled in (e.g. a time with no distance) is rejected rather than saved
- * as a bad first row in swim_tests/bike_tests/run_tests.
+ * A goal is required only when the chosen event has a curated ladder to pick
+ * from (lib/goals/catalog.ts) — an event without one (e.g. Cycling FTP Test
+ * today) has nothing to choose, so onboarding shouldn't block on it. See
+ * GoalStep.tsx for the corresponding "no predefined goals yet" UI state.
  */
-export function validateBaselineStep(disciplines: Discipline[], baselines: AthleteBaselines): StepValidation {
-  const errors: Record<string, string> = {};
+export function validateGoalStep(
+  sport: SportKey | null,
+  eventKey: string | null,
+  goalLevelKey: string | null
+): StepValidation {
+  if (!sport || !eventKey) return fail({ goal_level_key: "Choose a sport and event first." });
 
-  if (disciplines.includes("swim")) {
-    const error = validateSwimBaseline(baselines.swim);
-    if (error) errors.swim = error;
-  }
-  if (disciplines.includes("bike")) {
-    const error = validateBikeBaseline(baselines.bike);
-    if (error) errors.bike = error;
-  }
-  if (disciplines.includes("run")) {
-    const error = validateRunBaseline(baselines.run);
-    if (error) errors.run = error;
+  const id = eventId(sport, eventKey);
+  if (!hasGoalLadder(id)) return ok();
+
+  if (!goalLevelKey || !getGoalLevel(id, goalLevelKey)) {
+    return fail({ goal_level_key: "Choose a goal to continue." });
   }
 
-  return Object.keys(errors).length === 0 ? ok() : fail(errors);
-}
-
-export function validateGoalStep(input: {
-  goal_target_date: string | null;
-  goal_target_time_seconds: number | null;
-}): StepValidation {
-  const errors: Record<string, string> = {};
-
-  if (input.goal_target_date && Number.isNaN(new Date(input.goal_target_date).getTime())) {
-    errors.goal_target_date = "Enter a valid date.";
-  }
-
-  if (input.goal_target_time_seconds !== null && input.goal_target_time_seconds <= 0) {
-    errors.goal_target_time_seconds = "Goal time must be positive.";
-  }
-
-  return Object.keys(errors).length === 0 ? ok() : fail(errors);
+  return ok();
 }

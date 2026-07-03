@@ -45,11 +45,22 @@ export function getAveragePace(tests: RunTest[]): number | null {
   return paces.reduce((sum, p) => sum + p, 0) / paces.length;
 }
 
+/** Performance trend (pace, lower is better) — the run equivalent of
+ * swim.analytics.ts's getLatestTrend / bike.analytics.ts's getSpeedTrend.
+ * Distinct from getCadenceTrend, which tracks a technique metric, not
+ * performance. */
+export function getPaceTrend(tests: RunTest[], windowSize = 3): TrendResult {
+  const chronologicalPaces = sortByDateAscending(tests)
+    .filter((t) => t.distance_km > 0)
+    .map(paceSecondsPerKm);
+  return detectTrend(chronologicalPaces, "lowerIsBetter", windowSize);
+}
+
 export function getCadenceTrend(tests: RunTest[], windowSize = 3): TrendResult {
   const withCadence = sortByDateAscending(tests).filter(
-    (t): t is RunTest & { cadence: number } => t.cadence !== null
+    (t): t is RunTest & { avg_cadence: number } => t.avg_cadence !== null
   );
-  return detectTrend(withCadence.map((t) => t.cadence), "higherIsBetter", windowSize);
+  return detectTrend(withCadence.map((t) => t.avg_cadence), "higherIsBetter", windowSize);
 }
 
 /** Seconds/km improved between the first and latest test, comparable across

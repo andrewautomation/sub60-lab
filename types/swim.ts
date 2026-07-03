@@ -11,11 +11,7 @@ export interface SwimTest {
   avg_hr: number | null;
   max_hr: number | null;
   pool_length_m: number | null;
+  notes: string | null;
 }
-
-export type SwimTestSummary = Pick<
-  SwimTest,
-  "test_date" | "distance_m" | "time_seconds" | "pace_per_100m" | "swolf"
->;
 
 export type NewSwimTest = Omit<SwimTest, "id">;
