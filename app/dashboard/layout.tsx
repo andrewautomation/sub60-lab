@@ -6,7 +6,8 @@ import Sidebar from "@/components/Sidebar";
 import ErrorState from "@/components/ErrorState";
 import { getSession } from "@/services/auth.service";
 import { fetchProfile } from "@/services/profile.service";
-import { hasCompletedOnboarding } from "@/lib/athlete/domain";
+import { hasCompletedOnboarding, getPrimaryDisciplines } from "@/lib/athlete/domain";
+import { Discipline } from "@/lib/race/models";
 
 /**
  * Every route under /dashboard is gated here, once, rather than in each
@@ -23,6 +24,7 @@ export default function DashboardLayout({
   const [checked, setChecked] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [disciplines, setDisciplines] = useState<Discipline[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -51,6 +53,7 @@ export default function DashboardLayout({
         return;
       }
 
+      setDisciplines(getPrimaryDisciplines(profile));
       setChecked(true);
     }
 
@@ -87,7 +90,7 @@ export default function DashboardLayout({
 
   return (
     <div className="flex flex-col md:flex-row bg-slate-950 text-white min-h-screen">
-      <Sidebar />
+      <Sidebar disciplines={disciplines} />
       <main className="flex-1 p-6 md:p-10">{children}</main>
     </div>
   );

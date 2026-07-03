@@ -2,19 +2,34 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Discipline } from "@/lib/race/models";
 
-const links = [
-  { href: "/dashboard", label: "🏠 Dashboard" },
-  { href: "/dashboard/import", label: "⬆ Import", badge: "Recommended" },
-  { href: "/dashboard/swim", label: "🏊 Swim" },
-  { href: "/dashboard/bike", label: "🚴 Bike" },
-  { href: "/dashboard/run", label: "🏃 Run" },
-  { href: "/dashboard/goals", label: "🎯 Goals" },
-  { href: "/dashboard/settings", label: "⚙ Settings" },
+interface NavLink {
+  href: string;
+  label: string;
+  badge?: string;
+}
+
+const DISCIPLINE_LINKS: (NavLink & { discipline: Discipline })[] = [
+  { href: "/dashboard/swim", label: "🏊 Swim", discipline: "swim" },
+  { href: "/dashboard/bike", label: "🚴 Bike", discipline: "bike" },
+  { href: "/dashboard/run", label: "🏃 Run", discipline: "run" },
 ];
 
-export default function Sidebar() {
+interface Props {
+  disciplines: Discipline[];
+}
+
+export default function Sidebar({ disciplines }: Props) {
   const pathname = usePathname();
+
+  const links: NavLink[] = [
+    { href: "/dashboard", label: "🏠 Dashboard" },
+    { href: "/dashboard/import", label: "⬆ Import", badge: "Recommended" },
+    ...DISCIPLINE_LINKS.filter((link) => disciplines.includes(link.discipline)),
+    { href: "/dashboard/goals", label: "🎯 Goals" },
+    { href: "/dashboard/settings", label: "⚙ Settings" },
+  ];
 
   return (
     <aside className="w-full md:w-64 bg-slate-900 border-r border-slate-800 md:min-h-screen">
