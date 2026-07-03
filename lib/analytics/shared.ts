@@ -165,6 +165,24 @@ export function sortByDateAscending<T extends { test_date: string }>(
   return [...items].sort((a, b) => a.test_date.localeCompare(b.test_date));
 }
 
+/**
+ * Drops interval-style reps (a Test Type with `reps` set — see
+ * lib/benchmarks/fields.ts / components/tests/TestForm.tsx) from any
+ * "personal best / continuous effort" calculation. A 400m rep pace run at
+ * track speed is not a fair personal-best/current-level/race-prediction
+ * input alongside a continuous 5K time trial — the same reason the
+ * per-row Goal % column already skips interval tests. Shared across
+ * RunTest/SwimTest/BikeTest since all three carry the same test_type_id
+ * shape; a test with no type (legacy/unsorted) is always kept.
+ */
+export function excludeIntervalTests<T extends { test_type_id: string | null }>(
+  tests: T[],
+  testTypes: { id: string; reps: number | null }[]
+): T[] {
+  const intervalTypeIds = new Set(testTypes.filter((t) => t.reps !== null).map((t) => t.id));
+  return tests.filter((t) => !t.test_type_id || !intervalTypeIds.has(t.test_type_id));
+}
+
 export function takeMostRecent<T extends { test_date: string }>(
   items: T[],
   count: number

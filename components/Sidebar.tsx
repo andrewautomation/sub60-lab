@@ -25,7 +25,6 @@ export default function Sidebar({ disciplines }: Props) {
 
   const links: NavLink[] = [
     { href: "/dashboard", label: "🏠 Dashboard" },
-    { href: "/dashboard/import", label: "⬆ Import", badge: "Recommended" },
     ...DISCIPLINE_LINKS.filter((link) => disciplines.includes(link.discipline)),
     { href: "/dashboard/goals", label: "🎯 Goals" },
     { href: "/dashboard/settings", label: "⚙ Settings" },

@@ -15,21 +15,21 @@ function capitalize(s: string): string {
 }
 
 /**
- * Read-only display for lib/performance-engine's seven outputs. Labeled
+ * Read-only display for lib/performance-engine's five outputs. Labeled
  * "Preview" deliberately — this consumes the engine's own explanations
  * for every null/unsupported case rather than inventing UI copy, so if the
  * engine's reasoning changes, this component doesn't drift out of sync
  * with it.
  */
 export default function PerformanceEngineSection({ result }: { result: PerformanceEngineResult }) {
-  const { currentLevel, goalGap, goalConfidence, racePrediction, bottleneck, roi, trend } = result;
+  const { currentLevel, racePrediction, bottleneck, roi, trend } = result;
 
   return (
     <section className="mt-10 rounded-2xl bg-slate-900 p-6">
       <p className="text-cyan-400 tracking-[0.3em] text-xs">PERFORMANCE ENGINE v1 (PREVIEW)</p>
       <h2 className="text-2xl font-bold mt-1">Where you stand</h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
         <div className="rounded-xl bg-slate-800 p-4">
           <p className="text-slate-400 text-sm">Current Level</p>
           <p className="mt-2 text-2xl font-bold">{currentLevel.overall ? LEVEL_LABEL[currentLevel.overall] : "—"}</p>
@@ -40,28 +40,6 @@ export default function PerformanceEngineSection({ result }: { result: Performan
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="rounded-xl bg-slate-800 p-4">
-          <p className="text-slate-400 text-sm">Goal Gap</p>
-          <p className="mt-2 text-2xl font-bold">
-            {goalGap.gapSeconds !== null
-              ? `${goalGap.gapSeconds > 0 ? "+" : "-"}${formatDuration(Math.abs(goalGap.gapSeconds))}`
-              : "—"}
-          </p>
-          <p className="mt-2 text-xs text-slate-400">{goalGap.explanation}</p>
-        </div>
-
-        <div className="rounded-xl bg-slate-800 p-4">
-          <p className="text-slate-400 text-sm">Goal Confidence</p>
-          <p className="mt-2 text-2xl font-bold capitalize">
-            {goalConfidence ? `${goalConfidence.level} (${goalConfidence.score})` : "—"}
-          </p>
-          <p className="mt-2 text-xs text-slate-400">
-            {goalConfidence
-              ? "Based on gap, momentum, data quality, and time remaining."
-              : "Set a goal to see this."}
-          </p>
         </div>
 
         <div className="rounded-xl bg-slate-800 p-4">

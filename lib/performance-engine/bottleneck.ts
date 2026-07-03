@@ -18,7 +18,7 @@ function capitalize(s: string): string {
  * measure while contributing little to total race time (see roi.ts).
  */
 export function computeBottleneck(input: PerformanceEngineInput): BottleneckResult {
-  const targets = resolveEngineTargets(input.athlete, input.goal);
+  const targets = resolveEngineTargets(input.athlete);
   const gaps: { discipline: Discipline; gapPercent: number }[] = [];
 
   if (targets.swim) {

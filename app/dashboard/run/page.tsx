@@ -3,19 +3,16 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import TestHistoryTable, { TestColumnConfig } from "@/components/tests/TestHistoryTable";
+import TestHistoryTable from "@/components/tests/TestHistoryTable";
 import TestProgressChart from "@/components/tests/TestProgressChart";
 import TestTypeFilter, { ALL_TEST_TYPES, UNSORTED_TEST_TYPE } from "@/components/tests/TestTypeFilter";
 import ErrorState from "@/components/ErrorState";
 import { useRunTests } from "@/hooks/useRunTests";
 import { useTestTypes } from "@/hooks/useTestTypes";
-import { useGoals } from "@/hooks/useGoals";
 import { getAveragePace, getBestPace, getGapToTargetPace } from "@/lib/analytics/run.analytics";
-import { getLatestTest, sortByDateAscending } from "@/lib/analytics/shared";
+import { excludeIntervalTests, getLatestTest, sortByDateAscending } from "@/lib/analytics/shared";
 import { RUN_TEST_COLUMNS } from "@/lib/tests/runFields";
 import { formatTime, formatDuration } from "@/lib/format/time";
-import { resolveEngineTargets } from "@/lib/performance-engine/targets";
-import { computeTestGoalProximity, proximityColorClass } from "@/lib/performance-engine/testGoalProximity";
 import { RunTest } from "@/types/run";
 
 function paceSecondsPerKm(test: RunTest): number {
@@ -26,10 +23,9 @@ export default function RunPage() {
   const router = useRouter();
   const { tests: allTests, loading, error, refresh, removeTest } = useRunTests();
   const { testTypes, remove: removeTestType } = useTestTypes("run");
-  const { athlete, goal, loading: goalsLoading } = useGoals();
   const [selectedType, setSelectedType] = useState<string>(ALL_TEST_TYPES);
 
-  if (loading || goalsLoading) {
+  if (loading) {
     return <p className="text-slate-400">Loading run data...</p>;
   }
 
@@ -53,37 +49,21 @@ export default function RunPage() {
         ? allTests.filter((t) => !t.test_type_id)
         : allTests.filter((t) => t.test_type_id === selectedType);
 
-  const pb = getBestPace(tests);
-  const averagePace = getAveragePace(tests);
+  // Interval reps (e.g. 400m repeats) aren't a fair "personal best /
+  // continuous effort" input alongside continuous-distance tests — see
+  // lib/analytics/shared.ts excludeIntervalTests. That only matters when
+  // aggregating across types (the "All Types" view); once the athlete has
+  // filtered down to one specific type, every row is already the same
+  // shape, interval or not, so there's nothing to exclude.
+  // The History table below still shows every row, intervals included.
+  const continuousTests = selectedType === ALL_TEST_TYPES ? excludeIntervalTests(tests, testTypes) : tests;
+
+  const pb = getBestPace(continuousTests);
+  const averagePace = getAveragePace(continuousTests);
   const latest = getLatestTest(tests);
-  const gap = getGapToTargetPace(tests);
+  const gap = getGapToTargetPace(continuousTests);
 
-  // "Goal %" only appears when the athlete has an explicit active goal —
-  // same gate lib/performance-engine/goalGap.ts uses — so this reads as
-  // proximity to the goal they set, not a silent generic benchmark.
-  const runTarget = athlete && goal ? resolveEngineTargets(athlete, goal).run : null;
-  const columns: TestColumnConfig<RunTest>[] =
-    goal && runTarget
-      ? [
-          ...RUN_TEST_COLUMNS,
-          {
-            key: "goal_proximity",
-            label: "Goal %",
-            render: (t: RunTest) => {
-              const score = computeTestGoalProximity(
-                paceSecondsPerKm(t),
-                runTarget.pace_seconds_per_km,
-                "lowerIsBetter",
-                t.test_date,
-                goal.target_date
-              );
-              return <span className={proximityColorClass(score)}>{score}%</span>;
-            },
-          },
-        ]
-      : RUN_TEST_COLUMNS;
-
-  const chartData = sortByDateAscending(tests).map((t) => ({
+  const chartData = sortByDateAscending(continuousTests).map((t) => ({
     test_date: t.test_date,
     pace_seconds_per_km: Math.round(paceSecondsPerKm(t)),
   }));
@@ -100,12 +80,6 @@ export default function RunPage() {
           <Link href="/dashboard/run/new" className="rounded-lg bg-cyan-500 px-4 py-2 text-black font-semibold">
             + New Run Test
           </Link>
-          <p className="mt-2 text-xs text-slate-500">
-            Prefer bulk import?{" "}
-            <Link href="/dashboard/import" className="text-cyan-400">
-              Import from Garmin →
-            </Link>
-          </p>
         </div>
       </div>
 
@@ -123,7 +97,7 @@ export default function RunPage() {
         <div className="rounded-2xl bg-slate-900 p-5">
           <p className="text-slate-400 text-sm">Average Pace</p>
           <p className="mt-2 text-3xl font-bold">{averagePace !== null ? `${formatDuration(averagePace)}/km` : "—"}</p>
-          <p className="text-sm text-slate-500">Across {tests.length} test{tests.length === 1 ? "" : "s"}</p>
+          <p className="text-sm text-slate-500">Across {continuousTests.length} test{continuousTests.length === 1 ? "" : "s"}</p>
         </div>
 
         <div className="rounded-2xl bg-slate-900 p-5">
@@ -144,15 +118,15 @@ export default function RunPage() {
       <div className="mt-10">
         <h2 className="text-2xl font-bold mb-4">Test History</h2>
         <TestHistoryTable
-          columns={columns}
+          columns={RUN_TEST_COLUMNS}
           rows={tests}
           onEdit={(id) => router.push(`/dashboard/run/${id}/edit`)}
           onDelete={removeTest}
-          emptyMessage="No run tests yet — log one manually or import from Garmin."
+          emptyMessage="No run tests yet — log your first one."
         />
       </div>
 
-      {tests.length > 0 && (
+      {continuousTests.length > 0 && (
         <div className="mt-10">
           <TestProgressChart
             title="Run Pace Progress"

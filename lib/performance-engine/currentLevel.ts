@@ -28,7 +28,7 @@ function levelFromScore(score: number): DisciplineLevel {
 }
 
 export function computeCurrentLevel(input: PerformanceEngineInput): CurrentLevelResult {
-  const targets = resolveEngineTargets(input.athlete, input.goal);
+  const targets = resolveEngineTargets(input.athlete);
   const disciplines: DisciplineCurrentLevel[] = [];
 
   if (targets.swim) {

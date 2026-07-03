@@ -1,10 +1,7 @@
 import { NewBikeTest } from "@/types/bike";
 import { FormValidation, validationFail, validationOk, warnIfOutOfRange } from "./shared";
 
-/**
- * Gates manual Add/Edit Bike Test input. Distinct from validateBike.ts,
- * which gates a Garmin CSV row (BikeDraft — no test_type, no max_power).
- */
+/** Gates manual Add/Edit Bike Test input. */
 export function validateBikeTestForm(input: NewBikeTest): FormValidation {
   const errors: Record<string, string> = {};
 

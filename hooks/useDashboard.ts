@@ -7,11 +7,11 @@ import { fetchProfile } from "@/services/profile.service";
 import { fetchSwimTests } from "@/services/swim.service";
 import { fetchBikeTests } from "@/services/bike.service";
 import { fetchRunTests } from "@/services/run.service";
-import { fetchActiveGoalForEvent } from "@/services/goal.service";
+import { fetchTestTypes } from "@/services/testType.service";
 import { getGapToTarget as getSwimGap, getPersonalBest as getSwimPb } from "@/lib/analytics/swim.analytics";
 import { getBestSpeed as getBikePb, getGapToTargetSpeed as getBikeGap } from "@/lib/analytics/bike.analytics";
 import { getBestPace as getRunPb, getGapToTargetPace as getRunGap } from "@/lib/analytics/run.analytics";
-import { getLatestTest } from "@/lib/analytics/shared";
+import { excludeIntervalTests, getLatestTest } from "@/lib/analytics/shared";
 import { runPerformanceEngine, PerformanceEngineResult } from "@/lib/performance-engine";
 import { DashboardSummary } from "@/types/dashboard";
 import { Athlete } from "@/types/athlete";
@@ -65,33 +65,56 @@ export function useDashboard() {
       const runTests = runResult.tests;
 
       setAthlete(profile);
+
+      // Interval reps (e.g. 400m repeats) aren't a fair "personal best /
+      // continuous effort" input — they'd otherwise skew PB, Race
+      // Prediction, Current Level, and Goal Gap the same way a short
+      // sprint pace would. Test Types (and which of them are
+      // interval-style) are per-athlete, so this needs the profile first.
+      let continuousSwimTests = swimTests;
+      let continuousBikeTests = bikeTests;
+      let continuousRunTests = runTests;
+
+      if (profile) {
+        const [swimTypesResult, bikeTypesResult, runTypesResult] = await Promise.all([
+          fetchTestTypes(profile.id, "swim"),
+          fetchTestTypes(profile.id, "bike"),
+          fetchTestTypes(profile.id, "run"),
+        ]);
+        if (!active) return;
+
+        continuousSwimTests = excludeIntervalTests(swimTests, swimTypesResult.testTypes);
+        continuousBikeTests = excludeIntervalTests(bikeTests, bikeTypesResult.testTypes);
+        continuousRunTests = excludeIntervalTests(runTests, runTypesResult.testTypes);
+      }
+
       setSummary({
         swim: {
           latest: getLatestTest(swimTests),
-          personalBest: getSwimPb(swimTests),
-          gapToTarget: getSwimGap(swimTests),
+          personalBest: getSwimPb(continuousSwimTests),
+          gapToTarget: getSwimGap(continuousSwimTests),
         },
         bike: {
           latest: getLatestTest(bikeTests),
-          personalBest: getBikePb(bikeTests),
-          gapToTarget: getBikeGap(bikeTests),
+          personalBest: getBikePb(continuousBikeTests),
+          gapToTarget: getBikeGap(continuousBikeTests),
         },
         run: {
           latest: getLatestTest(runTests),
-          personalBest: getRunPb(runTests),
-          gapToTarget: getRunGap(runTests),
+          personalBest: getRunPb(continuousRunTests),
+          gapToTarget: getRunGap(continuousRunTests),
         },
       });
 
       if (profile) {
-        const { goal, error: goalError } = await fetchActiveGoalForEvent(profile.id, profile.primary_event_id);
-        if (!active) return;
-        if (goalError) {
-          setError(goalError);
-          setLoading(false);
-          return;
-        }
-        setPerformanceEngine(runPerformanceEngine({ athlete: profile, goal, swimTests, bikeTests, runTests }));
+        setPerformanceEngine(
+          runPerformanceEngine({
+            athlete: profile,
+            swimTests: continuousSwimTests,
+            bikeTests: continuousBikeTests,
+            runTests: continuousRunTests,
+          })
+        );
       }
 
       setLoading(false);

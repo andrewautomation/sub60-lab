@@ -3,33 +3,28 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import TestHistoryTable, { TestColumnConfig } from "@/components/tests/TestHistoryTable";
+import TestHistoryTable from "@/components/tests/TestHistoryTable";
 import TestProgressChart from "@/components/tests/TestProgressChart";
 import TestTypeFilter, { ALL_TEST_TYPES, UNSORTED_TEST_TYPE } from "@/components/tests/TestTypeFilter";
 import ErrorState from "@/components/ErrorState";
 import { useSwimTests } from "@/hooks/useSwimTests";
 import { useTestTypes } from "@/hooks/useTestTypes";
-import { useGoals } from "@/hooks/useGoals";
 import {
   getAverageTime,
   getGapToTarget,
   getPersonalBest,
 } from "@/lib/analytics/swim.analytics";
-import { getLatestTest, sortByDateAscending } from "@/lib/analytics/shared";
+import { excludeIntervalTests, getLatestTest, sortByDateAscending } from "@/lib/analytics/shared";
 import { SWIM_TEST_COLUMNS } from "@/lib/tests/swimFields";
 import { formatTime } from "@/lib/format/time";
-import { resolveEngineTargets } from "@/lib/performance-engine/targets";
-import { computeTestGoalProximity, proximityColorClass } from "@/lib/performance-engine/testGoalProximity";
-import { SwimTest } from "@/types/swim";
 
 export default function SwimPage() {
   const router = useRouter();
   const { tests: allTests, loading, error, refresh, removeTest } = useSwimTests();
   const { testTypes, remove: removeTestType } = useTestTypes("swim");
-  const { athlete, goal, loading: goalsLoading } = useGoals();
   const [selectedType, setSelectedType] = useState<string>(ALL_TEST_TYPES);
 
-  if (loading || goalsLoading) {
+  if (loading) {
     return <p className="text-slate-400">Loading swim data...</p>;
   }
 
@@ -50,32 +45,18 @@ export default function SwimPage() {
         ? allTests.filter((t) => !t.test_type_id)
         : allTests.filter((t) => t.test_type_id === selectedType);
 
-  const pb = getPersonalBest(tests);
-  const average = getAverageTime(tests);
-  const latest = getLatestTest(tests);
-  const gap = getGapToTarget(tests);
+  // Interval reps (e.g. 50m repeats) aren't a fair "personal best /
+  // continuous effort" input alongside continuous-distance tests — see
+  // lib/analytics/shared.ts excludeIntervalTests. That only matters when
+  // aggregating across types ("All Types"); once filtered to one specific
+  // type every row is already the same shape, interval or not, so
+  // there's nothing to exclude.
+  const continuousTests = selectedType === ALL_TEST_TYPES ? excludeIntervalTests(tests, testTypes) : tests;
 
-  const swimTarget = athlete && goal ? resolveEngineTargets(athlete, goal).swim : null;
-  const columns: TestColumnConfig<SwimTest>[] =
-    goal && swimTarget
-      ? [
-          ...SWIM_TEST_COLUMNS,
-          {
-            key: "goal_proximity",
-            label: "Goal %",
-            render: (t: SwimTest) => {
-              const score = computeTestGoalProximity(
-                t.time_seconds,
-                swimTarget.time_seconds,
-                "lowerIsBetter",
-                t.test_date,
-                goal.target_date
-              );
-              return <span className={proximityColorClass(score)}>{score}%</span>;
-            },
-          },
-        ]
-      : SWIM_TEST_COLUMNS;
+  const pb = getPersonalBest(continuousTests);
+  const average = getAverageTime(continuousTests);
+  const latest = getLatestTest(tests);
+  const gap = getGapToTarget(continuousTests);
 
   return (
     <div>
@@ -89,12 +70,6 @@ export default function SwimPage() {
           <Link href="/dashboard/swim/new" className="rounded-lg bg-cyan-500 px-4 py-2 text-black font-semibold">
             + New Swim Test
           </Link>
-          <p className="mt-2 text-xs text-slate-500">
-            Prefer bulk import?{" "}
-            <Link href="/dashboard/import" className="text-cyan-400">
-              Import from Garmin →
-            </Link>
-          </p>
         </div>
       </div>
 
@@ -112,7 +87,7 @@ export default function SwimPage() {
         <div className="rounded-2xl bg-slate-900 p-5">
           <p className="text-slate-400 text-sm">Average Time</p>
           <p className="mt-2 text-3xl font-bold">{average !== null ? formatTime(average) : "—"}</p>
-          <p className="text-sm text-slate-500">Across {tests.length} test{tests.length === 1 ? "" : "s"}</p>
+          <p className="text-sm text-slate-500">Across {continuousTests.length} test{continuousTests.length === 1 ? "" : "s"}</p>
         </div>
 
         <div className="rounded-2xl bg-slate-900 p-5">
@@ -133,19 +108,19 @@ export default function SwimPage() {
       <div className="mt-10">
         <h2 className="text-2xl font-bold mb-4">Test History</h2>
         <TestHistoryTable
-          columns={columns}
+          columns={SWIM_TEST_COLUMNS}
           rows={tests}
           onEdit={(id) => router.push(`/dashboard/swim/${id}/edit`)}
           onDelete={removeTest}
-          emptyMessage="No swim tests yet — log one manually or import from Garmin."
+          emptyMessage="No swim tests yet — log your first one."
         />
       </div>
 
-      {tests.length > 0 && (
+      {continuousTests.length > 0 && (
         <div className="mt-10">
           <TestProgressChart
             title="Swim Progress"
-            data={sortByDateAscending(tests)}
+            data={sortByDateAscending(continuousTests)}
             xKey="test_date"
             yKey="time_seconds"
             reversed

@@ -1,5 +1,4 @@
 import { Athlete } from "@/types/athlete";
-import { Goal } from "@/types/goal";
 import { SwimTest } from "@/types/swim";
 import { BikeTest } from "@/types/bike";
 import { RunTest } from "@/types/run";
@@ -19,11 +18,6 @@ import { TrendResult } from "@/types/analytics";
 
 export interface PerformanceEngineInput {
   athlete: Athlete;
-  /** The athlete's current active goal for their primary event, or null if
-   * they haven't set one (see services/goal.service.ts
-   * fetchActiveGoalForEvent — resolving that is the caller's job; this
-   * engine takes plain data only, no Supabase). */
-  goal: Goal | null;
   swimTests: SwimTest[];
   bikeTests: BikeTest[];
   runTests: RunTest[];
@@ -59,37 +53,6 @@ export interface CurrentLevelResult {
    * discipline has any data yet. */
   overall: DisciplineLevel | null;
   overallScore: number | null;
-}
-
-export interface GoalGapResult {
-  /** Seconds: projected finish time minus goal target. Positive = short of
-   * goal, negative = already beating it. Null if there's no active goal,
-   * or not enough test data to project a finish time. */
-  gapSeconds: number | null;
-  explanation: string;
-}
-
-export interface GoalConfidenceBreakdown {
-  /** 0-100: how much to trust the underlying test data (sample size,
-   * recency, consistency) — see lib/race/score.ts. Averaged across every
-   * discipline the athlete's sport trains. */
-  dataQualityScore: number;
-  /** 0-100: how close the current projection already is to the goal. */
-  gapScore: number;
-  /** 0-100: reflects recent trend direction/magnitude across disciplines —
-   * improving raises this, declining lowers it, no data scores neutral. */
-  momentumScore: number;
-  /** 0-100: whether there's realistically enough calendar time left before
-   * the goal's target_date, given current momentum. Neutral 50 when the
-   * goal has no target_date to evaluate against. */
-  paceToDeadlineScore: number;
-}
-
-export interface GoalConfidenceResult {
-  score: number;
-  level: "high" | "medium" | "low";
-  breakdown: GoalConfidenceBreakdown;
-  assumptions: string[];
 }
 
 export interface SingleDisciplinePrediction {
@@ -157,10 +120,6 @@ export interface PerformanceEngineResult {
   generatedAt: string;
   raceFormat: RaceFormat | null;
   currentLevel: CurrentLevelResult;
-  goalGap: GoalGapResult;
-  /** Null when there's no active goal — confidence in a goal that doesn't
-   * exist isn't a meaningful number. */
-  goalConfidence: GoalConfidenceResult | null;
   racePrediction: RacePredictionResult;
   bottleneck: BottleneckResult;
   roi: ROIResult;

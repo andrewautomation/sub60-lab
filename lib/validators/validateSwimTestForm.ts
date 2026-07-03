@@ -1,11 +1,7 @@
 import { NewSwimTest } from "@/types/swim";
 import { FormValidation, validationFail, validationOk, warnIfOutOfRange } from "./shared";
 
-/**
- * Gates manual Add/Edit Swim Test input. Distinct from validateSwim.ts,
- * which gates a Garmin CSV row (a different shape — SwimDraft, no
- * test_type since imports fall back to the activity title).
- */
+/** Gates manual Add/Edit Swim Test input. */
 export function validateSwimTestForm(input: NewSwimTest): FormValidation {
   const errors: Record<string, string> = {};
 

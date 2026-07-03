@@ -1,10 +1,7 @@
 import { NewRunTest } from "@/types/run";
 import { FormValidation, validationFail, validationOk, warnIfOutOfRange } from "./shared";
 
-/**
- * Gates manual Add/Edit Run Test input. Distinct from validateRun.ts,
- * which gates a Garmin CSV row (RunDraft — no test_type, no stride length).
- */
+/** Gates manual Add/Edit Run Test input. */
 export function validateRunTestForm(input: NewRunTest): FormValidation {
   const errors: Record<string, string> = {};
 
