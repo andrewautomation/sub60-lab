@@ -1,4 +1,4 @@
-import { formatTime } from "@/lib/format/time";
+import { formatDuration } from "@/lib/format/time";
 import { resolveGoalTargetSeconds } from "./targets";
 import { GoalGapResult, PerformanceEngineInput, RacePredictionResult } from "./types";
 
@@ -36,7 +36,7 @@ export function computeGoalGap(input: PerformanceEngineInput, racePrediction: Ra
     gapSeconds,
     explanation:
       gapSeconds <= 0
-        ? `Projected finish time is ${formatTime(Math.abs(gapSeconds))} faster than the goal.`
-        : `Projected finish time is ${formatTime(gapSeconds)} slower than the goal.`,
+        ? `Projected finish time is ${formatDuration(Math.abs(gapSeconds))} faster than the goal.`
+        : `Projected finish time is ${formatDuration(gapSeconds)} slower than the goal.`,
   };
 }

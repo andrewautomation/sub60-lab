@@ -6,7 +6,7 @@ import { formatOrDash } from "@/lib/format/value";
 
 export const SWIM_TEST_FIELDS: TestFieldConfig[] = [
   { key: "test_date", label: "Date", type: "date", required: true },
-  { key: "test_type", label: "Test type", type: "text", required: true, placeholder: "e.g. 400m Time Trial" },
+  { key: "test_type_id", label: "Test type", type: "test_type", required: true },
   { key: "distance_m", label: "Distance", type: "number", required: true, unit: "m" },
   { key: "time_seconds", label: "Time", type: "duration", required: true },
   { key: "pace_per_100m", label: "Pace / 100m", type: "text", placeholder: "e.g. 1:45" },
@@ -22,6 +22,7 @@ export const SWIM_TEST_FIELDS: TestFieldConfig[] = [
 export const SWIM_TEST_DEFAULT_VALUES: TestFormValues = {
   test_date: null,
   test_type: "",
+  test_type_id: null,
   distance_m: null,
   time_seconds: null,
   pace_per_100m: null,
@@ -42,6 +43,7 @@ export function valuesToNewSwimTest(values: TestFormValues): NewSwimTest {
   return {
     test_date: (values.test_date as string) ?? "",
     test_type: (values.test_type as string) ?? "",
+    test_type_id: (values.test_type_id as string) ?? null,
     distance_m: (values.distance_m as number) ?? 0,
     time_seconds: (values.time_seconds as number) ?? 0,
     pace_per_100m: (values.pace_per_100m as string) ?? null,

@@ -1,5 +1,5 @@
 import { PerformanceEngineResult } from "@/lib/performance-engine";
-import { formatTime } from "@/lib/format/time";
+import { formatDuration } from "@/lib/format/time";
 
 const DISCIPLINE_EMOJI: Record<string, string> = { swim: "🏊", bike: "🚴", run: "🏃" };
 const LEVEL_LABEL: Record<string, string> = {
@@ -46,7 +46,7 @@ export default function PerformanceEngineSection({ result }: { result: Performan
           <p className="text-slate-400 text-sm">Goal Gap</p>
           <p className="mt-2 text-2xl font-bold">
             {goalGap.gapSeconds !== null
-              ? `${goalGap.gapSeconds > 0 ? "+" : "-"}${formatTime(Math.abs(goalGap.gapSeconds))}`
+              ? `${goalGap.gapSeconds > 0 ? "+" : "-"}${formatDuration(Math.abs(goalGap.gapSeconds))}`
               : "—"}
           </p>
           <p className="mt-2 text-xs text-slate-400">{goalGap.explanation}</p>
@@ -67,7 +67,7 @@ export default function PerformanceEngineSection({ result }: { result: Performan
         <div className="rounded-xl bg-slate-800 p-4">
           <p className="text-slate-400 text-sm">Race Prediction</p>
           <p className="mt-2 text-2xl font-bold">
-            {racePrediction.totalSeconds !== undefined ? formatTime(racePrediction.totalSeconds) : "—"}
+            {racePrediction.totalSeconds !== undefined ? formatDuration(racePrediction.totalSeconds) : "—"}
           </p>
           <p className="mt-2 text-xs text-slate-400">
             {racePrediction.totalSeconds !== undefined

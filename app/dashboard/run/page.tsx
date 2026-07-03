@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import TestHistoryTable from "@/components/tests/TestHistoryTable";
 import TestProgressChart from "@/components/tests/TestProgressChart";
+import TestTypeFilter, { ALL_TEST_TYPES, UNSORTED_TEST_TYPE } from "@/components/tests/TestTypeFilter";
 import ErrorState from "@/components/ErrorState";
 import { useRunTests } from "@/hooks/useRunTests";
+import { useTestTypes } from "@/hooks/useTestTypes";
 import { getAveragePace, getBestPace, getGapToTargetPace } from "@/lib/analytics/run.analytics";
 import { getLatestTest, sortByDateAscending } from "@/lib/analytics/shared";
 import { RUN_TEST_COLUMNS } from "@/lib/tests/runFields";
-import { formatTime } from "@/lib/format/time";
+import { formatTime, formatDuration } from "@/lib/format/time";
 import { RunTest } from "@/types/run";
 
 function paceSecondsPerKm(test: RunTest): number {
@@ -18,7 +21,9 @@ function paceSecondsPerKm(test: RunTest): number {
 
 export default function RunPage() {
   const router = useRouter();
-  const { tests, loading, error, refresh, removeTest } = useRunTests();
+  const { tests: allTests, loading, error, refresh, removeTest } = useRunTests();
+  const { testTypes } = useTestTypes("run");
+  const [selectedType, setSelectedType] = useState<string>(ALL_TEST_TYPES);
 
   if (loading) {
     return <p className="text-slate-400">Loading run data...</p>;
@@ -27,6 +32,13 @@ export default function RunPage() {
   if (error) {
     return <ErrorState message={`Couldn't load your run data: ${error}`} onRetry={refresh} />;
   }
+
+  const tests =
+    selectedType === ALL_TEST_TYPES
+      ? allTests
+      : selectedType === UNSORTED_TEST_TYPE
+        ? allTests.filter((t) => !t.test_type_id)
+        : allTests.filter((t) => t.test_type_id === selectedType);
 
   const pb = getBestPace(tests);
   const averagePace = getAveragePace(tests);
@@ -59,16 +71,20 @@ export default function RunPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
+      <div className="mt-6">
+        <TestTypeFilter testTypes={testTypes} selected={selectedType} onSelect={setSelectedType} />
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
         <div className="rounded-2xl bg-slate-900 p-5">
           <p className="text-slate-400 text-sm">Personal Best Pace</p>
-          <p className="mt-2 text-3xl font-bold">{pb ? `${formatTime(paceSecondsPerKm(pb))}/km` : "—"}</p>
+          <p className="mt-2 text-3xl font-bold">{pb ? `${formatDuration(paceSecondsPerKm(pb))}/km` : "—"}</p>
           <p className="text-sm text-slate-500">{pb ? `${pb.distance_km} km · ${formatTime(pb.time_seconds)}` : "No tests yet"}</p>
         </div>
 
         <div className="rounded-2xl bg-slate-900 p-5">
           <p className="text-slate-400 text-sm">Average Pace</p>
-          <p className="mt-2 text-3xl font-bold">{averagePace !== null ? `${formatTime(averagePace)}/km` : "—"}</p>
+          <p className="mt-2 text-3xl font-bold">{averagePace !== null ? `${formatDuration(averagePace)}/km` : "—"}</p>
           <p className="text-sm text-slate-500">Across {tests.length} test{tests.length === 1 ? "" : "s"}</p>
         </div>
 
@@ -106,6 +122,9 @@ export default function RunPage() {
             xKey="test_date"
             yKey="pace_seconds_per_km"
             reversed
+            yLabel="Pace"
+            yFormatter={(value) => `${formatDuration(value)} /km`}
+            axisFormatter={(value) => formatDuration(value)}
           />
         </div>
       )}

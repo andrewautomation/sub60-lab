@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import TestForm, { TestFormValues } from "@/components/tests/TestForm";
 import { useBikeTests } from "@/hooks/useBikeTests";
+import { useTestTypes } from "@/hooks/useTestTypes";
 import { BIKE_TEST_DEFAULT_VALUES, BIKE_TEST_FIELDS, valuesToNewBikeTest } from "@/lib/tests/bikeFields";
 import { validateBikeTestForm } from "@/lib/validators/validateBikeTestForm";
 
 export default function NewBikeTestPage() {
   const router = useRouter();
   const { createTest } = useBikeTests();
+  const { testTypes, create: createTestType } = useTestTypes("bike");
 
   const [values, setValues] = useState<TestFormValues>(BIKE_TEST_DEFAULT_VALUES);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -61,6 +63,8 @@ export default function NewBikeTestPage() {
           submitting={submitting}
           submitLabel="Save test"
           submitError={submitError}
+          testTypeOptions={testTypes}
+          onCreateTestType={createTestType}
         />
       </div>
     </div>

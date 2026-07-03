@@ -15,6 +15,7 @@ export async function saveParsedActivity(
     return insertSwimTest({
       test_date: activity.test_date,
       test_type: activity.title ?? "Garmin Import",
+      test_type_id: null,
       distance_m: activity.distance_m,
       time_seconds: activity.time_seconds,
       pace_per_100m: activity.pace_per_100m,
@@ -32,6 +33,7 @@ export async function saveParsedActivity(
     return insertBikeTest({
       test_date: activity.test_date,
       test_type: activity.title ?? "Garmin Import",
+      test_type_id: null,
       distance_km: activity.distance_km,
       time_seconds: activity.time_seconds,
       avg_power: activity.avg_power,
@@ -48,6 +50,7 @@ export async function saveParsedActivity(
   return insertRunTest({
     test_date: activity.test_date,
     test_type: activity.title ?? "Garmin Import",
+    test_type_id: null,
     distance_km: activity.distance_km,
     time_seconds: activity.time_seconds,
     pace_per_km: activity.pace_per_km,

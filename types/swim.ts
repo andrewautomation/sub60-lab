@@ -2,6 +2,7 @@ export interface SwimTest {
   id: string;
   test_date: string;
   test_type: string;
+  test_type_id: string | null;
   distance_m: number;
   time_seconds: number;
   pace_per_100m: string | null;

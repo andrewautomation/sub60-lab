@@ -2,6 +2,7 @@ export interface RunTest {
   id: string;
   test_date: string;
   test_type: string;
+  test_type_id: string | null;
   distance_km: number;
   time_seconds: number;
   pace_per_km: string | null;

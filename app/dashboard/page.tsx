@@ -6,7 +6,7 @@ import KpiCard from "@/components/KpiCard";
 import PerformanceEngineSection from "@/components/PerformanceEngineSection";
 import ErrorState from "@/components/ErrorState";
 import { useDashboard } from "@/hooks/useDashboard";
-import { formatTime } from "@/lib/format/time";
+import { formatTime, formatDuration } from "@/lib/format/time";
 import { getPrimaryEventLabel, getPrimaryDisciplines } from "@/lib/athlete/domain";
 
 export default function Dashboard() {
@@ -82,7 +82,7 @@ export default function Dashboard() {
         {showRun && (
           <KpiCard
             title="Run PB"
-            value={runPaceSecondsPerKm !== null ? `${formatTime(runPaceSecondsPerKm)}/km` : "—"}
+            value={runPaceSecondsPerKm !== null ? `${formatDuration(runPaceSecondsPerKm)}/km` : "—"}
             subtitle={run.personalBest ? `${run.personalBest.distance_km} km` : "No tests yet"}
           />
         )}
@@ -91,7 +91,7 @@ export default function Dashboard() {
           title="Race Prediction"
           value={
             performanceEngine?.racePrediction.totalSeconds !== undefined
-              ? formatTime(performanceEngine.racePrediction.totalSeconds)
+              ? formatDuration(performanceEngine.racePrediction.totalSeconds)
               : "—"
           }
           subtitle={

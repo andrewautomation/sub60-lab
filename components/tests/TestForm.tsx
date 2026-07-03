@@ -1,6 +1,9 @@
 "use client";
 
-export type TestFieldType = "date" | "text" | "number" | "duration" | "textarea";
+import { useState } from "react";
+import { TestType } from "@/types/testType";
+
+export type TestFieldType = "date" | "text" | "number" | "duration" | "textarea" | "test_type";
 
 export interface TestFieldConfig {
   key: string;
@@ -51,6 +54,85 @@ function DurationInput({ totalSeconds, onChange }: DurationInputProps) {
   );
 }
 
+const NEW_TEST_TYPE_OPTION = "__new__";
+
+interface TestTypeInputProps {
+  testTypeId: string | null;
+  options: TestType[];
+  onSelect: (testType: TestType) => void;
+  onCreate: (name: string) => Promise<{ testType: TestType | null; error: string | null }>;
+}
+
+/** Select-or-create for the athlete's own named test protocols ("5K Time
+ * Trial", "400m Intervals") — same reveal-a-text-input-inline pattern as
+ * the "Custom" goal target in components/onboarding/GoalStep.tsx, so
+ * creating a new type doesn't need a separate modal/page. */
+function TestTypeInput({ testTypeId, options, onSelect, onCreate }: TestTypeInputProps) {
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  async function submitNewType() {
+    if (!newName.trim()) return;
+    const { testType, error } = await onCreate(newName.trim());
+    if (error || !testType) {
+      setCreateError(error ?? "Could not create test type.");
+      return;
+    }
+    setCreating(false);
+    setNewName("");
+    setCreateError(null);
+    onSelect(testType);
+  }
+
+  if (creating) {
+    return (
+      <div className="flex gap-2">
+        <input
+          type="text"
+          autoFocus
+          className="w-full rounded-lg p-3 bg-slate-800"
+          placeholder="e.g. 400m Intervals"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+        />
+        <button type="button" onClick={submitNewType} className="rounded-lg bg-cyan-500 px-4 text-black font-semibold">
+          Add
+        </button>
+        <button type="button" onClick={() => setCreating(false)} className="rounded-lg bg-slate-800 px-4">
+          ✕
+        </button>
+        {createError && <p className="text-sm text-red-400">{createError}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <select
+      className="w-full rounded-lg p-3 bg-slate-800"
+      value={testTypeId ?? ""}
+      onChange={(e) => {
+        if (e.target.value === NEW_TEST_TYPE_OPTION) {
+          setCreating(true);
+          return;
+        }
+        const selected = options.find((t) => t.id === e.target.value);
+        if (selected) onSelect(selected);
+      }}
+    >
+      <option value="" disabled>
+        Select a test type
+      </option>
+      {options.map((t) => (
+        <option key={t.id} value={t.id}>
+          {t.name}
+        </option>
+      ))}
+      <option value={NEW_TEST_TYPE_OPTION}>+ New test type...</option>
+    </select>
+  );
+}
+
 interface Props {
   fields: TestFieldConfig[];
   values: TestFormValues;
@@ -62,6 +144,8 @@ interface Props {
   submitting: boolean;
   submitLabel: string;
   submitError: string | null;
+  testTypeOptions?: TestType[];
+  onCreateTestType?: (name: string) => Promise<{ testType: TestType | null; error: string | null }>;
 }
 
 /**
@@ -80,7 +164,11 @@ export default function TestForm({
   submitting,
   submitLabel,
   submitError,
+  testTypeOptions = [],
+  onCreateTestType,
 }: Props) {
+  const todayIso = new Date().toISOString().slice(0, 10);
+
   return (
     <form
       onSubmit={(e) => {
@@ -103,6 +191,16 @@ export default function TestForm({
                 totalSeconds={typeof values[field.key] === "number" ? (values[field.key] as number) : null}
                 onChange={(seconds) => onChange(field.key, seconds)}
               />
+            ) : field.type === "test_type" && onCreateTestType ? (
+              <TestTypeInput
+                testTypeId={typeof values[field.key] === "string" ? (values[field.key] as string) : null}
+                options={testTypeOptions}
+                onCreate={onCreateTestType}
+                onSelect={(testType) => {
+                  onChange(field.key, testType.id);
+                  onChange("test_type", testType.name);
+                }}
+              />
             ) : field.type === "textarea" ? (
               <textarea
                 className="w-full rounded-lg p-3 bg-slate-800"
@@ -115,6 +213,7 @@ export default function TestForm({
               <input
                 type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
                 step={field.step}
+                max={field.type === "date" ? todayIso : undefined}
                 className="w-full rounded-lg p-3 bg-slate-800"
                 placeholder={field.placeholder}
                 value={values[field.key] ?? ""}

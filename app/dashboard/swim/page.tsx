@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import TestHistoryTable from "@/components/tests/TestHistoryTable";
 import TestProgressChart from "@/components/tests/TestProgressChart";
+import TestTypeFilter, { ALL_TEST_TYPES, UNSORTED_TEST_TYPE } from "@/components/tests/TestTypeFilter";
 import ErrorState from "@/components/ErrorState";
 import { useSwimTests } from "@/hooks/useSwimTests";
+import { useTestTypes } from "@/hooks/useTestTypes";
 import {
   getAverageTime,
   getGapToTarget,
@@ -17,7 +20,9 @@ import { formatTime } from "@/lib/format/time";
 
 export default function SwimPage() {
   const router = useRouter();
-  const { tests, loading, error, refresh, removeTest } = useSwimTests();
+  const { tests: allTests, loading, error, refresh, removeTest } = useSwimTests();
+  const { testTypes } = useTestTypes("swim");
+  const [selectedType, setSelectedType] = useState<string>(ALL_TEST_TYPES);
 
   if (loading) {
     return <p className="text-slate-400">Loading swim data...</p>;
@@ -26,6 +31,13 @@ export default function SwimPage() {
   if (error) {
     return <ErrorState message={`Couldn't load your swim data: ${error}`} onRetry={refresh} />;
   }
+
+  const tests =
+    selectedType === ALL_TEST_TYPES
+      ? allTests
+      : selectedType === UNSORTED_TEST_TYPE
+        ? allTests.filter((t) => !t.test_type_id)
+        : allTests.filter((t) => t.test_type_id === selectedType);
 
   const pb = getPersonalBest(tests);
   const average = getAverageTime(tests);
@@ -53,7 +65,11 @@ export default function SwimPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
+      <div className="mt-6">
+        <TestTypeFilter testTypes={testTypes} selected={selectedType} onSelect={setSelectedType} />
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
         <div className="rounded-2xl bg-slate-900 p-5">
           <p className="text-slate-400 text-sm">Personal Best</p>
           <p className="mt-2 text-3xl font-bold">{pb ? formatTime(pb.time_seconds) : "—"}</p>
@@ -100,6 +116,8 @@ export default function SwimPage() {
             xKey="test_date"
             yKey="time_seconds"
             reversed
+            yLabel="Time"
+            yFormatter={(value) => formatTime(value)}
           />
         </div>
       )}

@@ -1,12 +1,13 @@
 import { TestFieldConfig, TestFormValues } from "@/components/tests/TestForm";
 import { TestColumnConfig } from "@/components/tests/TestHistoryTable";
 import { NewRunTest, RunTest } from "@/types/run";
-import { formatTime } from "@/lib/format/time";
+import { formatTime, formatDuration } from "@/lib/format/time";
 import { formatOrDash } from "@/lib/format/value";
+import { parseDurationToSeconds } from "@/lib/parser/fieldUtils";
 
 export const RUN_TEST_FIELDS: TestFieldConfig[] = [
   { key: "test_date", label: "Date", type: "date", required: true },
-  { key: "test_type", label: "Test type", type: "text", required: true, placeholder: "e.g. 5K Time Trial" },
+  { key: "test_type_id", label: "Test type", type: "test_type", required: true },
   { key: "distance_km", label: "Distance", type: "number", required: true, step: 0.01, unit: "km" },
   { key: "time_seconds", label: "Time", type: "duration", required: true },
   { key: "pace_per_km", label: "Pace / km", type: "text", placeholder: "e.g. 4:30" },
@@ -20,6 +21,7 @@ export const RUN_TEST_FIELDS: TestFieldConfig[] = [
 export const RUN_TEST_DEFAULT_VALUES: TestFormValues = {
   test_date: null,
   test_type: "",
+  test_type_id: null,
   distance_km: null,
   time_seconds: null,
   pace_per_km: null,
@@ -30,6 +32,30 @@ export const RUN_TEST_DEFAULT_VALUES: TestFormValues = {
   notes: null,
 };
 
+/**
+ * Keeps Time and Pace/km in sync as the athlete fills the form — editing
+ * either one (once Distance is known) derives the other, rather than
+ * letting the two drift apart as independent free-text fields.
+ */
+export function withDerivedRunFields(
+  current: TestFormValues,
+  key: string,
+  value: string | number | null
+): TestFormValues {
+  const next = { ...current, [key]: value };
+  const distanceKm = typeof next.distance_km === "number" ? next.distance_km : null;
+  if (!distanceKm) return next;
+
+  if (key === "time_seconds" && typeof value === "number") {
+    next.pace_per_km = formatDuration(value / distanceKm);
+  } else if (key === "pace_per_km" && typeof value === "string") {
+    const paceSecondsPerKm = parseDurationToSeconds(value);
+    if (paceSecondsPerKm !== null) next.time_seconds = Math.round(paceSecondsPerKm * distanceKm);
+  }
+
+  return next;
+}
+
 export function runTestToValues(test: RunTest): TestFormValues {
   return { ...test };
 }
@@ -38,6 +64,7 @@ export function valuesToNewRunTest(values: TestFormValues): NewRunTest {
   return {
     test_date: (values.test_date as string) ?? "",
     test_type: (values.test_type as string) ?? "",
+    test_type_id: (values.test_type_id as string) ?? null,
     distance_km: (values.distance_km as number) ?? 0,
     time_seconds: (values.time_seconds as number) ?? 0,
     pace_per_km: (values.pace_per_km as string) ?? null,

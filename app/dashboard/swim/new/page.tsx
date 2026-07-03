@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import TestForm, { TestFormValues } from "@/components/tests/TestForm";
 import { useSwimTests } from "@/hooks/useSwimTests";
+import { useTestTypes } from "@/hooks/useTestTypes";
 import { SWIM_TEST_DEFAULT_VALUES, SWIM_TEST_FIELDS, valuesToNewSwimTest } from "@/lib/tests/swimFields";
 import { validateSwimTestForm } from "@/lib/validators/validateSwimTestForm";
 
 export default function NewSwimTestPage() {
   const router = useRouter();
   const { createTest } = useSwimTests();
+  const { testTypes, create: createTestType } = useTestTypes("swim");
 
   const [values, setValues] = useState<TestFormValues>(SWIM_TEST_DEFAULT_VALUES);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -61,6 +63,8 @@ export default function NewSwimTestPage() {
           submitting={submitting}
           submitLabel="Save test"
           submitError={submitError}
+          testTypeOptions={testTypes}
+          onCreateTestType={createTestType}
         />
       </div>
     </div>

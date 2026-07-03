@@ -6,7 +6,7 @@ import { formatOrDash } from "@/lib/format/value";
 
 export const BIKE_TEST_FIELDS: TestFieldConfig[] = [
   { key: "test_date", label: "Date", type: "date", required: true },
-  { key: "test_type", label: "Test type", type: "text", required: true, placeholder: "e.g. 10K Time Trial" },
+  { key: "test_type_id", label: "Test type", type: "test_type", required: true },
   { key: "distance_km", label: "Distance", type: "number", required: true, step: 0.01, unit: "km" },
   { key: "time_seconds", label: "Time", type: "duration", required: true },
   { key: "avg_power", label: "Avg power", type: "number", unit: "W" },
@@ -22,6 +22,7 @@ export const BIKE_TEST_FIELDS: TestFieldConfig[] = [
 export const BIKE_TEST_DEFAULT_VALUES: TestFormValues = {
   test_date: null,
   test_type: "",
+  test_type_id: null,
   distance_km: null,
   time_seconds: null,
   avg_power: null,
@@ -42,6 +43,7 @@ export function valuesToNewBikeTest(values: TestFormValues): NewBikeTest {
   return {
     test_date: (values.test_date as string) ?? "",
     test_type: (values.test_type as string) ?? "",
+    test_type_id: (values.test_type_id as string) ?? null,
     distance_km: (values.distance_km as number) ?? 0,
     time_seconds: (values.time_seconds as number) ?? 0,
     avg_power: (values.avg_power as number) ?? null,

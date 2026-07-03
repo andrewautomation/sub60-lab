@@ -2,6 +2,7 @@ export interface BikeTest {
   id: string;
   test_date: string;
   test_type: string;
+  test_type_id: string | null;
   distance_km: number;
   time_seconds: number;
   avg_power: number | null;

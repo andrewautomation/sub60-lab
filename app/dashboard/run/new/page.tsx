@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import TestForm, { TestFormValues } from "@/components/tests/TestForm";
 import { useRunTests } from "@/hooks/useRunTests";
-import { RUN_TEST_DEFAULT_VALUES, RUN_TEST_FIELDS, valuesToNewRunTest } from "@/lib/tests/runFields";
+import { useTestTypes } from "@/hooks/useTestTypes";
+import { RUN_TEST_DEFAULT_VALUES, RUN_TEST_FIELDS, valuesToNewRunTest, withDerivedRunFields } from "@/lib/tests/runFields";
 import { validateRunTestForm } from "@/lib/validators/validateRunTestForm";
 
 export default function NewRunTestPage() {
   const router = useRouter();
   const { createTest } = useRunTests();
+  const { testTypes, create: createTestType } = useTestTypes("run");
 
   const [values, setValues] = useState<TestFormValues>(RUN_TEST_DEFAULT_VALUES);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -19,7 +21,7 @@ export default function NewRunTestPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   function updateValue(key: string, value: string | number | null) {
-    setValues((current) => ({ ...current, [key]: value }));
+    setValues((current) => withDerivedRunFields(current, key, value));
   }
 
   async function handleSubmit() {
@@ -61,6 +63,8 @@ export default function NewRunTestPage() {
           submitting={submitting}
           submitLabel="Save test"
           submitError={submitError}
+          testTypeOptions={testTypes}
+          onCreateTestType={createTestType}
         />
       </div>
     </div>

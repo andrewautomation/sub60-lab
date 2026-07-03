@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import TestForm, { TestFormValues } from "@/components/tests/TestForm";
 import { useBikeTests } from "@/hooks/useBikeTests";
+import { useTestTypes } from "@/hooks/useTestTypes";
 import { BIKE_TEST_FIELDS, bikeTestToValues, valuesToNewBikeTest } from "@/lib/tests/bikeFields";
 import { validateBikeTestForm } from "@/lib/validators/validateBikeTestForm";
 
@@ -12,6 +13,7 @@ export default function EditBikeTestPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const { tests, loading, editTest } = useBikeTests();
+  const { testTypes, create: createTestType } = useTestTypes("bike");
 
   const [values, setValues] = useState<TestFormValues | null>(null);
   const [loadedTestId, setLoadedTestId] = useState<string | null>(null);
@@ -91,6 +93,8 @@ export default function EditBikeTestPage() {
           submitting={submitting}
           submitLabel="Save changes"
           submitError={submitError}
+          testTypeOptions={testTypes}
+          onCreateTestType={createTestType}
         />
       </div>
     </div>

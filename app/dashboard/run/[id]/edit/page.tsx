@@ -5,13 +5,15 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import TestForm, { TestFormValues } from "@/components/tests/TestForm";
 import { useRunTests } from "@/hooks/useRunTests";
-import { RUN_TEST_FIELDS, runTestToValues, valuesToNewRunTest } from "@/lib/tests/runFields";
+import { useTestTypes } from "@/hooks/useTestTypes";
+import { RUN_TEST_FIELDS, runTestToValues, valuesToNewRunTest, withDerivedRunFields } from "@/lib/tests/runFields";
 import { validateRunTestForm } from "@/lib/validators/validateRunTestForm";
 
 export default function EditRunTestPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const { tests, loading, editTest } = useRunTests();
+  const { testTypes, create: createTestType } = useTestTypes("run");
 
   const [values, setValues] = useState<TestFormValues | null>(null);
   const [loadedTestId, setLoadedTestId] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export default function EditRunTestPage() {
   }
 
   function updateValue(key: string, value: string | number | null) {
-    setValues((current) => (current ? { ...current, [key]: value } : current));
+    setValues((current) => (current ? withDerivedRunFields(current, key, value) : current));
   }
 
   async function handleSubmit() {
@@ -91,6 +93,8 @@ export default function EditRunTestPage() {
           submitting={submitting}
           submitLabel="Save changes"
           submitError={submitError}
+          testTypeOptions={testTypes}
+          onCreateTestType={createTestType}
         />
       </div>
     </div>

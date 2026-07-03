@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { BikeTest, NewBikeTest } from "@/types/bike";
 
 const BIKE_TEST_COLUMNS =
-  "id, test_date, test_type, distance_km, time_seconds, avg_power, normalized_power, max_power, avg_hr, max_hr, avg_cadence, avg_speed_kmh, notes";
+  "id, test_date, test_type, test_type_id, distance_km, time_seconds, avg_power, normalized_power, max_power, avg_hr, max_hr, avg_cadence, avg_speed_kmh, notes";
 
 /** `error` is only set for a genuine fetch failure — never for the
  * legitimate "no tests logged yet" case (`tests: [], error: null`).

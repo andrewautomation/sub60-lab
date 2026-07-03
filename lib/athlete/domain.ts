@@ -2,7 +2,7 @@ import { RaceFormat } from "@/lib/race/models";
 import { getEventById, getSport, getDisciplinesForSport } from "@/lib/sports/registry";
 import { Discipline, EventDefinition, SportDefinition } from "@/lib/sports/types";
 import { getGoalLevel } from "@/lib/goals/registry";
-import { formatTime } from "@/lib/format/time";
+import { formatDuration } from "@/lib/format/time";
 import { Athlete } from "@/types/athlete";
 import { Goal } from "@/types/goal";
 
@@ -83,7 +83,7 @@ export function describeGoal(goal: Pick<Goal, "event_id" | "level_key" | "custom
     return level?.display_name ?? "Custom target";
   }
   if (goal.custom_target_value !== null) {
-    return formatTime(goal.custom_target_value);
+    return formatDuration(goal.custom_target_value);
   }
   return "No target set";
 }
