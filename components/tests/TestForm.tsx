@@ -87,15 +87,22 @@ function NewTestTypeModal({ distanceUnit, onCreate, onCreated, onClose }: NewTes
   const [mode, setMode] = useState<"single" | "intervals">("single");
   const [distance, setDistance] = useState("");
   const [reps, setReps] = useState("");
-  const [distancePerRep, setDistancePerRep] = useState("");
+  // Always entered in meters — interval distances (400m, 800m, 1000m...)
+  // are near-universally meter-denominated even for run/bike, whose
+  // single-distance mode uses km. Storing "400" as 400km instead of 0.4km
+  // silently produced an absurd Rep time once paired with a pace, so this
+  // input never shares a unit with the single-distance one.
+  const [distancePerRepMeters, setDistancePerRepMeters] = useState("");
   const [restText, setRestText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const metersPerUnit = distanceUnit === "km" ? 1000 : 1;
+  const distancePerRep = (Number(distancePerRepMeters) || 0) / metersPerUnit;
   const totalDistance =
     mode === "single"
       ? Number(distance) || 0
-      : Math.round((Number(reps) || 0) * (Number(distancePerRep) || 0) * 1000) / 1000;
+      : Math.round((Number(reps) || 0) * distancePerRep * 1000) / 1000;
 
   async function handleCreate() {
     if (!name.trim()) {
@@ -115,7 +122,7 @@ function NewTestTypeModal({ distanceUnit, onCreate, onCreated, onClose }: NewTes
       name: name.trim(),
       distance: totalDistance,
       reps: mode === "intervals" ? Number(reps) : null,
-      distancePerRep: mode === "intervals" ? Number(distancePerRep) : null,
+      distancePerRep: mode === "intervals" ? distancePerRep : null,
       restSeconds: mode === "intervals" ? parseDurationToSeconds(restText) : null,
     });
     setSubmitting(false);
@@ -190,13 +197,13 @@ function NewTestTypeModal({ distanceUnit, onCreate, onCreated, onClose }: NewTes
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-400 mb-1">Distance per rep ({distanceUnit})</label>
+                <label className="block text-sm text-slate-400 mb-1">Distance per rep (m)</label>
                 <input
                   type="number"
                   min={0}
                   className="w-full rounded-lg p-3 bg-slate-800"
-                  value={distancePerRep}
-                  onChange={(e) => setDistancePerRep(e.target.value)}
+                  value={distancePerRepMeters}
+                  onChange={(e) => setDistancePerRepMeters(e.target.value)}
                 />
               </div>
               <div className="col-span-2">
@@ -216,7 +223,9 @@ function NewTestTypeModal({ distanceUnit, onCreate, onCreated, onClose }: NewTes
             {mode === "single"
               ? "This distance is fixed for this test type — every test logged under it will use it."
               : totalDistance > 0
-                ? `${reps} × ${distancePerRep}${distanceUnit} = ${totalDistance}${distanceUnit} total. When logging a test, Distance locks to ${distancePerRep}${distanceUnit} per rep and Time is one rep's time.`
+                ? `${reps} × ${distancePerRepMeters}m = ${totalDistance}${distanceUnit} total. When logging a test, Distance locks to ${
+                    distanceUnit === "km" ? `${distancePerRep}km (${distancePerRepMeters}m)` : `${distancePerRepMeters}m`
+                  } per rep and Time is one rep's time.`
                 : "Distance per rep is fixed for this test type once set — Time will be one rep's time, not the whole session."}
           </p>
 
@@ -412,7 +421,9 @@ export default function TestForm({
             {field.isDistance && isDistanceLocked && (
               <p className="mt-1 text-xs text-slate-500">
                 {isInterval
-                  ? `Fixed to ${lockedDistanceValue}${distanceField?.unit ?? ""} per rep by the "${selectedTestType?.name}" test type (${selectedTestType?.reps} reps, ${selectedTestType?.distance}${distanceField?.unit ?? ""} total).`
+                  ? `Fixed to ${lockedDistanceValue}${distanceField?.unit ?? ""}${
+                      distanceField?.unit === "km" ? ` (${Math.round((lockedDistanceValue ?? 0) * 1000)}m)` : ""
+                    } per rep by the "${selectedTestType?.name}" test type (${selectedTestType?.reps} reps, ${selectedTestType?.distance}${distanceField?.unit ?? ""} total).`
                   : `Fixed by the "${selectedTestType?.name}" test type.`}
               </p>
             )}
