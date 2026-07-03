@@ -4,15 +4,19 @@ import Link from "next/link";
 import DashboardCard from "@/components/DashboardCard";
 import KpiCard from "@/components/KpiCard";
 import PerformanceEngineSection from "@/components/PerformanceEngineSection";
+import RankingBadge from "@/components/dashboard/RankingBadge";
 import ErrorState from "@/components/ErrorState";
 import { useDashboard } from "@/hooks/useDashboard";
+import { usePerformanceBenchmarks } from "@/hooks/usePerformanceBenchmarks";
 import { formatTime, formatDuration } from "@/lib/format/time";
 import { getPrimaryEventLabel, getPrimaryDisciplines } from "@/lib/athlete/domain";
+import { computeIdentityBadge } from "@/lib/ranking";
 
 export default function Dashboard() {
   const { loading, error, retry, athlete, swim, bike, run, performanceEngine, logout } = useDashboard();
+  const { benchmarks, loading: benchmarksLoading } = usePerformanceBenchmarks();
 
-  if (loading) {
+  if (loading || benchmarksLoading) {
     return <div className="flex items-center justify-center">Loading...</div>;
   }
 
@@ -32,6 +36,8 @@ export default function Dashboard() {
   const showBike = disciplines.includes("bike");
   const showRun = disciplines.includes("run");
 
+  const identityBadge = computeIdentityBadge(athlete, benchmarks);
+
   return (
     <>
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
@@ -43,6 +49,9 @@ export default function Dashboard() {
             {fullName ? `${fullName}'s Dashboard` : "Dashboard"}
           </h1>
           <p className="mt-2 text-slate-400">{getPrimaryEventLabel(athlete)}</p>
+          <div className="mt-3">
+            <RankingBadge result={identityBadge} />
+          </div>
         </div>
 
         <div className="flex gap-3">

@@ -32,3 +32,11 @@ export async function createTestType(
   if (error || !data) return { testType: null, error: error?.message ?? "Could not create test type." };
   return { testType: data, error: null };
 }
+
+/** Deleting a type never deletes the athlete's logged tests — the FK
+ * (see supabase/migrations/20260703160000_test_types_delete_set_null.sql)
+ * is ON DELETE SET NULL, so its tests just fall back to "Unsorted". */
+export async function deleteTestType(id: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.from("test_types").delete().eq("id", id);
+  return { error: error?.message ?? null };
+}

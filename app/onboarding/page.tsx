@@ -6,6 +6,7 @@ import SportStep from "@/components/onboarding/SportStep";
 import EventStep from "@/components/onboarding/EventStep";
 import ProfileStep from "@/components/onboarding/ProfileStep";
 import GoalStep from "@/components/onboarding/GoalStep";
+import BenchmarksStep from "@/components/onboarding/BenchmarksStep";
 import ReviewStep from "@/components/onboarding/ReviewStep";
 import ErrorState from "@/components/ErrorState";
 
@@ -43,6 +44,7 @@ export default function OnboardingPage() {
       {step === "event" && <EventStep data={data} updateData={updateData} onNext={goNext} onBack={goBack} />}
       {step === "profile" && <ProfileStep data={data} updateData={updateData} onNext={goNext} onBack={goBack} />}
       {step === "goal" && <GoalStep data={data} updateData={updateData} onNext={goNext} onBack={goBack} />}
+      {step === "benchmarks" && <BenchmarksStep data={data} updateData={updateData} onNext={goNext} onBack={goBack} />}
       {step === "review" && (
         <ReviewStep
           data={data}

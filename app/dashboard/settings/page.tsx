@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 import { useProfileSettings } from "@/hooks/useProfileSettings";
+import { usePerformanceBenchmarks } from "@/hooks/usePerformanceBenchmarks";
 import { validateProfileStep } from "@/lib/validators/validateOnboarding";
 import { validatePassword } from "@/lib/validators/shared";
+import { BENCHMARK_FIELDS_BY_SPORT } from "@/lib/benchmarks/fields";
+import { parseDurationToSeconds } from "@/lib/parser/fieldUtils";
+import { formatDuration } from "@/lib/format/time";
 import ErrorState from "@/components/ErrorState";
 import { Sex } from "@/types/athlete";
 
@@ -25,8 +29,15 @@ interface ProfileFormValues {
 
 export default function SettingsPage() {
   const { athlete, loading, error, retry, saveProfile, changePassword } = useProfileSettings();
+  const { benchmarks, loading: benchmarksLoading, save: saveBenchmarks } = usePerformanceBenchmarks();
 
   const [profileValues, setProfileValues] = useState<ProfileFormValues | null>(null);
+  const [benchmarkValues, setBenchmarkValues] = useState<Record<string, number | null> | null>(null);
+  const [benchmarkDurationText, setBenchmarkDurationText] = useState<Record<string, string>>({});
+  const [benchmarksSeeded, setBenchmarksSeeded] = useState(false);
+  const [savingBenchmarks, setSavingBenchmarks] = useState(false);
+  const [benchmarksSaved, setBenchmarksSaved] = useState(false);
+  const [benchmarksError, setBenchmarksError] = useState<string | null>(null);
   const [seededId, setSeededId] = useState<string | null>(null);
   const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
   const [profileWarnings, setProfileWarnings] = useState<Record<string, string>>({});
@@ -53,6 +64,37 @@ export default function SettingsPage() {
       weight_kg: athlete.weight_kg,
       country: athlete.country,
     });
+  }
+
+  // Same render-time seeding pattern as the profile form above, gated on
+  // the benchmarks fetch finishing rather than an id (a fresh athlete
+  // legitimately has no performance_profiles row yet).
+  if (athlete && !benchmarksLoading && !benchmarksSeeded) {
+    setBenchmarksSeeded(true);
+    const fields = BENCHMARK_FIELDS_BY_SPORT[athlete.primary_sport_id];
+    setBenchmarkValues(
+      Object.fromEntries(fields.map((f) => [f.key, (benchmarks?.[f.key] as number | null) ?? null]))
+    );
+  }
+
+  function updateBenchmarkValue(key: string, value: number | null) {
+    setBenchmarkValues((current) => (current ? { ...current, [key]: value } : current));
+    setBenchmarksSaved(false);
+  }
+
+  async function handleSaveBenchmarks() {
+    if (!benchmarkValues) return;
+
+    setSavingBenchmarks(true);
+    setBenchmarksError(null);
+    const { error } = await saveBenchmarks(benchmarkValues);
+    setSavingBenchmarks(false);
+
+    if (error) {
+      setBenchmarksError(error);
+      return;
+    }
+    setBenchmarksSaved(true);
   }
 
   function updateProfileValue<K extends keyof ProfileFormValues>(key: K, value: ProfileFormValues[K]) {
@@ -213,6 +255,66 @@ export default function SettingsPage() {
           >
             {savingProfile ? "Saving..." : "Save Profile"}
           </button>
+        </section>
+
+        <section className="rounded-2xl bg-slate-900 p-6">
+          <h2 className="text-2xl font-bold mb-2">Performance Benchmarks</h2>
+          <p className="text-sm text-slate-400 mb-6">
+            Optional standard-distance/format times — powers the estimated ranking badge on your dashboard.
+          </p>
+
+          {!benchmarkValues ? (
+            <p className="text-slate-400">Loading...</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {BENCHMARK_FIELDS_BY_SPORT[athlete.primary_sport_id].map((field) => (
+                  <div key={field.key}>
+                    <label className="block text-sm text-slate-400 mb-1">{field.label}</label>
+                    {field.type === "watts" ? (
+                      <input
+                        type="number"
+                        min={0}
+                        placeholder="e.g. 250"
+                        className="w-full rounded-lg p-3 bg-slate-800"
+                        value={benchmarkValues[field.key] ?? ""}
+                        onChange={(e) =>
+                          updateBenchmarkValue(field.key, e.target.value === "" ? null : Number(e.target.value))
+                        }
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder="H:MM:SS"
+                        className="w-full rounded-lg p-3 bg-slate-800"
+                        value={
+                          benchmarkDurationText[field.key] ??
+                          (benchmarkValues[field.key] != null ? formatDuration(benchmarkValues[field.key] as number) : "")
+                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setBenchmarkDurationText((current) => ({ ...current, [field.key]: value }));
+                          const parsed = parseDurationToSeconds(value);
+                          updateBenchmarkValue(field.key, parsed && parsed > 0 ? parsed : null);
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {benchmarksError && <p className="mt-4 text-sm text-red-400">{benchmarksError}</p>}
+              {benchmarksSaved && !benchmarksError && <p className="mt-4 text-sm text-emerald-400">Benchmarks saved.</p>}
+
+              <button
+                onClick={handleSaveBenchmarks}
+                disabled={savingBenchmarks}
+                className="mt-6 rounded-lg bg-cyan-500 px-6 py-2 text-black font-semibold disabled:opacity-60"
+              >
+                {savingBenchmarks ? "Saving..." : "Save Benchmarks"}
+              </button>
+            </>
+          )}
         </section>
 
         <section className="rounded-2xl bg-slate-900 p-6">

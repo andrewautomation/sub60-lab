@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { getSession } from "@/services/auth.service";
 import { fetchProfile, upsertProfile, markOnboardingComplete } from "@/services/profile.service";
 import { createGoal } from "@/services/goal.service";
+import { upsertPerformanceProfile } from "@/services/performanceProfile.service";
 import { eventId } from "@/lib/sports/registry";
 import { hasCompletedOnboarding } from "@/lib/athlete/domain";
 import { SportKey } from "@/lib/sports/types";
 import { Sex } from "@/types/athlete";
 
-export const ONBOARDING_STEPS = ["sport", "event", "profile", "goal", "review"] as const;
+export const ONBOARDING_STEPS = ["sport", "event", "profile", "goal", "benchmarks", "review"] as const;
 
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
 
@@ -33,6 +34,10 @@ export interface OnboardingFormState {
    * — either because they picked "Custom" or because this event has no
    * curated ladder at all. */
   goal_custom_target_seconds: number | null;
+  /** Self-reported standard-distance/format benchmarks, keyed by
+   * PerformanceProfile column name (see lib/benchmarks/fields.ts) —
+   * entirely optional, used only for the dashboard identity badge. */
+  benchmarks: Partial<Record<string, number | null>>;
 }
 
 const INITIAL_STATE: OnboardingFormState = {
@@ -47,6 +52,7 @@ const INITIAL_STATE: OnboardingFormState = {
   country: null,
   goal_level_key: null,
   goal_custom_target_seconds: null,
+  benchmarks: {},
 };
 
 const DRAFT_KEY_PREFIX = "sub60_onboarding_draft:";
@@ -213,6 +219,22 @@ export function useOnboarding() {
       if (goalError) {
         setSubmitting(false);
         setSubmitError(goalError);
+        return;
+      }
+    }
+
+    const filledBenchmarks = Object.fromEntries(
+      Object.entries(data.benchmarks).filter(([, value]) => value !== null && value !== undefined)
+    );
+    if (Object.keys(filledBenchmarks).length > 0) {
+      const { error: benchmarkError } = await upsertPerformanceProfile({
+        profile_id: profile.id,
+        ...filledBenchmarks,
+      });
+
+      if (benchmarkError) {
+        setSubmitting(false);
+        setSubmitError(benchmarkError);
         return;
       }
     }

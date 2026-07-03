@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchProfile } from "@/services/profile.service";
-import { createTestType, fetchTestTypes } from "@/services/testType.service";
+import { createTestType, deleteTestType, fetchTestTypes } from "@/services/testType.service";
 import { Discipline } from "@/lib/race/models";
 import { TestType } from "@/types/testType";
 
@@ -52,5 +52,11 @@ export function useTestTypes(discipline: Discipline) {
     return { testType, error };
   }
 
-  return { testTypes, loading, error, create };
+  async function remove(id: string): Promise<{ error: string | null }> {
+    const { error } = await deleteTestType(id);
+    if (!error) setTestTypes((current) => current.filter((t) => t.id !== id));
+    return { error };
+  }
+
+  return { testTypes, loading, error, create, remove };
 }

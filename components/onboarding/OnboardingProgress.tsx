@@ -5,6 +5,7 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
   event: "Event",
   profile: "Profile",
   goal: "Goal",
+  benchmarks: "Benchmarks",
   review: "Review",
 };
 

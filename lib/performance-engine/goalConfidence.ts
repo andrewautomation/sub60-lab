@@ -31,13 +31,14 @@ import { resolveGoalTargetSeconds } from "./targets";
  * docstring in engine.ts).
  */
 const CONFIDENCE_WEIGHTS = { gap: 0.4, momentum: 0.25, dataQuality: 0.2, paceToDeadline: 0.15 };
-const LEVEL_THRESHOLDS = { high: 75, medium: 45 };
+export const LEVEL_THRESHOLDS = { high: 75, medium: 45 };
 
 /** Assumed minimum training block (in days) to meaningfully close a
  * nonzero performance gap — roughly 12 weeks. Not derived from this
  * athlete's data; a flat, stated assumption used only when a goal has a
- * target_date to evaluate pace against. */
-const MIN_COMFORTABLE_DAYS = 84;
+ * target_date to evaluate pace against. Exported so testGoalProximity.ts's
+ * per-test-row version of this same idea uses the identical constant. */
+export const MIN_COMFORTABLE_DAYS = 84;
 
 function computeDataQualityScore(input: PerformanceEngineInput, raceFormat: ReturnType<typeof getPrimaryRaceFormat>): number {
   if (raceFormat) {
